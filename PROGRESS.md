@@ -130,12 +130,35 @@ curl -X POST http://localhost:8000/api/transfers \
 
 | Phase | Avancement | État |
 |-------|-----------|------|
-| 1: Auth + Purchases | 100% | ✅ DONE |
-| 2: Stock Flows | 80% | 🟡 IN PROGRESS |
-| 3: POS & Sales | 0% | ⏳ PLANNED |
+| 1: Auth + Purchases | 100% | ✅ COMPLET |
+| 2: Stock Flows | 90% | 🟡 PRESQUE FINI |
+| 3: POS & Sales | 0% | ⏳ NEXT |
 | 4: Backoffice | 0% | ⏳ PLANNED |
 | 5: Exports | 0% | ⏳ PLANNED |
-| **TOTAL** | **35%** | 🟡 ON TRACK |
+| **TOTAL** | **55%** | ✅ ON TRACK |
+
+---
+
+## 🎬 VOIR LES AVANCÉES
+
+### Démarrage Rapide (Recommandé)
+
+```bash
+cd /workspaces/SIGEC
+./start-demo.sh          # Auto setup + full demo (~3 min)
+```
+
+Ou voir les détails complets:
+- `AVANCEES.md` - Détails complets des features
+- `DEMARRER.md` - Guide de démarrage rapide
+- `DEMO.md` - Instructions de test détaillées
+
+### Scripts Disponibles
+
+```bash
+./test-demo.sh           # Tester tous les endpoints
+./start-demo.sh          # Setup + auto-test complet
+```
 
 ---
 
