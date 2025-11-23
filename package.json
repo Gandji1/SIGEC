@@ -1,0 +1,12 @@
+{
+  "name": "sigec-simulator",
+  "version": "0.1.0",
+  "description": "Simulateur SIGEC pour tests locaux sans Docker",
+  "main": "test-simulator.js",
+  "scripts": {
+    "start": "node test-simulator.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
