@@ -36,8 +36,7 @@ class PurchaseController extends Controller
             'supplier_name' => 'required|string|max:255',
             'supplier_email' => 'nullable|email',
             'supplier_phone' => 'nullable|string',
-            'reference' => 'nullable|string|max:255|unique:purchases,reference,NULL,id,tenant_id,'.$request->header('X-Tenant-ID'),
-            'expected_delivery' => 'nullable|date',
+            'expected_date' => 'nullable|date',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -48,11 +47,7 @@ class PurchaseController extends Controller
         try {
             DB::beginTransaction();
 
-            $purchase = $this->purchaseService->createPurchase(
-                $request->header('X-Tenant-ID'),
-                auth()->id(),
-                $validated
-            );
+            $purchase = $this->purchaseService->createPurchase($validated);
 
             foreach ($validated['items'] as $item) {
                 $this->purchaseService->addItem(
@@ -66,7 +61,7 @@ class PurchaseController extends Controller
             DB::commit();
 
             return response()->json(
-                $purchase->load(['items', 'items.product']),
+                $purchase->fresh()->load(['items', 'items.product']),
                 201
             );
         } catch (\Exception $e) {
@@ -194,6 +189,13 @@ class PurchaseController extends Controller
     {
         $this->authorize('update', $purchase);
 
+        if ($purchase->status !== 'confirmed') {
+            return response()->json(
+                ['error' => 'Can only receive confirmed purchases'],
+                422
+            );
+        }
+
         $validated = $request->validate([
             'items' => 'required|array',
             'items.*.purchase_item_id' => 'required|exists:purchase_items,id',
@@ -204,9 +206,9 @@ class PurchaseController extends Controller
             DB::beginTransaction();
 
             foreach ($validated['items'] as $itemData) {
-                $purchaseItem = PurchaseItem::find($itemData['purchase_item_id']);
+                $purchaseItem = PurchaseItem::findOrFail($itemData['purchase_item_id']);
                 
-                if ($itemData['received_quantity'] > $purchaseItem->quantity) {
+                if ($itemData['received_quantity'] > $purchaseItem->quantity_ordered) {
                     throw new \Exception('Received quantity exceeds ordered quantity');
                 }
 
@@ -235,30 +237,27 @@ class PurchaseController extends Controller
     {
         $this->authorize('update', $purchase);
 
-        if (in_array($purchase->status, ['received', 'cancelled'])) {
+        try {
+            $this->purchaseService->cancelPurchase($purchase->id);
             return response()->json(
-                ['error' => 'Cannot cancel purchase in ' . $purchase->status . ' status'],
-                422
+                $purchase->fresh()->load(['items', 'items.product']),
+                200
             );
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
-
-        $this->purchaseService->cancelPurchase($purchase->id);
-
-        return response()->json(
-            $purchase->fresh()->load(['items', 'items.product']),
-            200
-        );
     }
 
     public function report(Request $request): JsonResponse
     {
-        $tenantId = $request->header('X-Tenant-ID');
-        
+        $validated = $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+        ]);
+
         $report = $this->purchaseService->getPurchasesReport(
-            $tenantId,
-            $request->query('start_date'),
-            $request->query('end_date'),
-            $request->query('supplier_name')
+            $validated['start_date'],
+            $validated['end_date']
         );
 
         return response()->json($report);

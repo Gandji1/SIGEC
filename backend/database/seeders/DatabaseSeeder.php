@@ -131,5 +131,8 @@ class DatabaseSeeder extends Seeder
         }
 
         $this->command->info('Database seeded successfully with test data!');
+
+        // Call the demo seeder for restaurant scenario
+        $this->call(DemoDataSeeder::class);
     }
 }

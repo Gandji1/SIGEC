@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Tenant;
+use App\Models\Warehouse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -19,6 +20,10 @@ class AuthController extends Controller
             'name' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8|confirmed',
+            'mode_pos' => 'required|in:A,B',
+            'currency' => 'nullable|string|size:3',
+            'country' => 'nullable|string',
+            'tax_id' => 'nullable|string',
         ]);
 
         // Créer le tenant
@@ -26,7 +31,24 @@ class AuthController extends Controller
             'name' => $validated['tenant_name'],
             'slug' => str()->slug($validated['tenant_name']),
             'status' => 'active',
+            'mode_pos' => $validated['mode_pos'],
+            'currency' => $validated['currency'] ?? 'XOF',
+            'country' => $validated['country'] ?? 'BJ',
+            'tax_id' => $validated['tax_id'],
+            'accounting_enabled' => true,
         ]);
+
+        // Créer les warehouses par défaut selon le mode
+        if ($validated['mode_pos'] === 'A') {
+            // Mode A: gros et détail
+            Warehouse::create(['tenant_id' => $tenant->id, 'name' => 'Gros', 'type' => 'gros']);
+            Warehouse::create(['tenant_id' => $tenant->id, 'name' => 'Détail', 'type' => 'detail']);
+        } else {
+            // Mode B: gros, détail et POS
+            Warehouse::create(['tenant_id' => $tenant->id, 'name' => 'Gros', 'type' => 'gros']);
+            Warehouse::create(['tenant_id' => $tenant->id, 'name' => 'Détail', 'type' => 'detail']);
+            Warehouse::create(['tenant_id' => $tenant->id, 'name' => 'POS', 'type' => 'pos']);
+        }
 
         // Créer l'utilisateur admin
         $user = User::create([
@@ -41,9 +63,10 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Registration successful',
+            'message' => 'Tenant créé avec succès (Mode ' . $validated['mode_pos'] . ')',
             'user' => $user,
             'tenant' => $tenant,
+            'warehouses' => $tenant->warehouses,
             'token' => $token,
         ], 201);
     }
