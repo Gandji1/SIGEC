@@ -74,9 +74,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/purchases/report', [PurchaseController::class, 'report']);
 
     // Transfer routes
-    Route::apiResource('transfers', TransferController::class);
-    Route::post('/transfers/{transfer}/approve', [TransferController::class, 'approveAndExecute']);
-    Route::post('/transfers/{transfer}/cancel', [TransferController::class, 'cancel']);
+    Route::prefix('transfers')->group(function () {
+        Route::get('/', [TransferController::class, 'index']);
+        Route::post('/', [TransferController::class, 'store']);
+        Route::get('/pending', [TransferController::class, 'pending']);
+        Route::get('/statistics', [TransferController::class, 'statistics']);
+        Route::get('/{transfer}', [TransferController::class, 'show']);
+        Route::post('/{transfer}/approve', [TransferController::class, 'approve']);
+        Route::post('/{transfer}/cancel', [TransferController::class, 'cancel']);
+    });
 
     // Stock routes
     Route::apiResource('stocks', StockController::class, ['only' => ['index', 'show']]);

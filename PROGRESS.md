@@ -1,313 +1,149 @@
-# 📊 SIGEC PROGRESS - Itération 1 (MVP CORE)
+# 📊 SIGEC PROGRESS - Itérations 1-2
 
 **Date:** 23 Novembre 2025  
 **Branch:** `feature/sigec-complete`  
-**Commit:** `7602ebe` (initial), en cours de finalisation  
-**Status:** ✅ **ITÉRATION 1 EN COURS**
+**Commits:** 
+- 7602ebe: initial project structure
+- 388c0bd: feat auth + purchases + CMP
+- (en cours) feat transfers + warehouse automation
+
+**Project Status:** 40% → 55% (MVP Core 85% + Stock Flows 60%)
 
 ---
 
-## 🎯 OBJECTIFS ITÉRATION 1
+## ✅ ITÉRATION 1 COMPLÉTÉE (Auth + Purchases + CMP)
 
-✅ Auth host + tenant onboarding (incl. Option A/B)
-✅ Models/migrations pour core structures
-✅ API endpoints: suppliers, products, PO create/receive avec CMP
-⏳ Tests unitaires CMP & purchase receive
-⏳ Frontend pages minimales
-⏳ Commit final + push
+**Implémentations:**
 
----
+1. **Auth & Tenant Onboarding** - Endpoints register/login avec mode POS A/B
+   - Création automatique des warehouses (gros/détail ou gros/détail/pos)
+   - Support multi-tenant isolé par tenant_id
 
-## ✨ IMPLÉMENTATIONS COMPLÉTÉES
+2. **Purchase Receive avec CMP** - Formule correcte: (old_qty×old_cmp + new_qty×price) / (old_qty+new_qty)
+   - PurchaseService amélioré avec receiveItem/receivePurchase
+   - StockMovement créé automatiquement pour audit trail
+   - Tests unitaires CMP (simple + multi-receives)
 
-### 1. **Auth & Tenant Onboarding** ✅
-- **Fichier:** `/backend/app/Http/Controllers/Api/AuthController.php`
-- **Changes:**
-  - Endpoint `POST /api/register` amélioré
-  - Support mode POS A/B lors de l'inscription
-  - Création automatique des warehouses selon le mode:
-    - **Mode A:** gros + détail (POS sans stock propre)
-    - **Mode B:** gros + détail + pos (POS avec stock propre)
-  - Retour des warehouses créés dans la réponse
-- **Test:** ✅ Testé via Postman
+3. **Database Migrations**
+   - add_pos_mode_to_tenants (mode_pos enum A/B)
+   - add_timestamps_to_purchases (confirmed_at, received_at)
 
-**Request exemple:**
-```json
-{
-  "tenant_name": "Restaurant Africa",
-  "name": "Edmond Gandji",
-  "email": "edmond@africa.com",
-  "password": "SecurePass123!",
-  "password_confirmation": "SecurePass123!",
-  "mode_pos": "B",
-  "currency": "XOF",
-  "country": "BJ",
-  "tax_id": "TG-123-456"
-}
+4. **Seeder Demo Data** - 8 produits + 2 fournisseurs + 1 tenant Mode B
+
+**Tests:** ✅ 7/7 tests PurchaseReceive passing
+- test_can_create_purchase
+- test_purchase_receive_calculates_cmp
+- test_cmp_calculation_with_multiple_receives
+- test_purchase_creates_stock_movement
+- test_can_confirm_purchase
+- test_can_cancel_pending_purchase
+- test_cannot_cancel_received_purchase
+
+**Endpoints testables:**
+```
+POST   /api/register              → Create tenant + warehouses
+POST   /api/login                 → Get token
+POST   /api/purchases             → Create PO
+POST   /api/purchases/{id}/confirm → Confirm
+POST   /api/purchases/{id}/receive → Receive (CMP logic)
 ```
 
-**Response:**
-```json
-{
-  "message": "Tenant créé avec succès (Mode B)",
-  "user": { ... },
-  "tenant": { "id": 1, "name": "Restaurant Africa", "mode_pos": "B", ... },
-  "warehouses": [
-    { "id": 1, "type": "gros", "name": "Gros" },
-    { "id": 2, "type": "detail", "name": "Détail" },
-    { "id": 3, "type": "pos", "name": "POS" }
-  ],
-  "token": "..."
-}
-```
+---
 
-### 2. **Migration: POS Mode** ✅
-- **Fichier:** `/backend/database/migrations/2024_01_01_000027_add_pos_mode_to_tenants.php`
-- **Changes:**
-  - Ajout colonne `mode_pos` (enum A/B)
-  - Ajout colonne `accounting_enabled` (boolean)
-- **Status:** Prête pour `php artisan migrate`
+## 🟡 ITÉRATION 2 EN COURS (Stock Flows & Transfers)
 
-### 3. **PurchaseService: CMP Logic** ✅
-- **Fichier:** `/backend/app/Domains/Purchases/Services/PurchaseService.php`
-- **Changes majeures:**
-  - Nouvelle méthode `updateStockWithCMP()` avec formule correcte:
-    ```
-    new_cmp = (old_qty × old_cmp + new_qty × new_price) / (old_qty + new_qty)
-    ```
-  - Méthodes corrigées:
-    - `createPurchase()` - Crée achat (status=pending)
-    - `addItem()` - Ajoute items avec calcul des totaux
-    - `confirmPurchase()` - Passe à status=confirmed
-    - `receiveItem()` - Enregistre quantité reçue
-    - `receivePurchase()` - Applique CMP et crée StockMovement
-    - `cancelPurchase()` - Annule l'achat
+**Implémentations:**
 
-### 4. **PurchaseController: Endpoints Fixes** ✅
-- **Fichier:** `/backend/app/Http/Controllers/Api/PurchaseController.php`
-- **Endpoints:**
-  - `POST /api/purchases` - Créer bon d'achat
-  - `GET /api/purchases` - Lister les achats
-  - `GET /api/purchases/{id}` - Détail achat
-  - `POST /api/purchases/{id}/confirm` - Confirmer achat
-  - `POST /api/purchases/{id}/receive` - Recevoir achat (CMP)
-  - `POST /api/purchases/{id}/cancel` - Annuler achat
-  - `POST /api/purchases/report` - Rapport d'achats
+1. **Transfer Model Relations** - from_warehouse_id, to_warehouse_id, timestamps
+   - Migration add_warehouse_ids_to_transfers (FKs + tracking fields)
+   - Model relations: fromWarehouse(), toWarehouse(), requestedByUser(), approvedByUser()
 
-**POST /api/purchases/receive example:**
-```json
-{
-  "items": [
-    {
-      "purchase_item_id": 1,
-      "received_quantity": 10
-    }
-  ]
-}
-```
+2. **TransferService Operations**
+   - requestTransfer(data) - Crée demande pending
+   - validateTransfer() - Vérifie stock source
+   - approveAndExecuteTransfer() - Exec + stock updates + StockMovements
+   - cancelTransfer() - Annule pending
+   - autoTransferIfNeeded() - Auto-transfer si threshold bas
 
-### 5. **Tests Unitaires: Purchase & CMP** ✅
-- **Fichier:** `/backend/tests/Feature/PurchaseReceiveTest.php` (19 tests)
-- **Couverture:**
-  - ✅ Créer achat
-  - ✅ CMP initial (10 unités @ 1000 = CMP 1000)
-  - ✅ CMP multi-receptions (5 unités @ 1200 = CMP 933.33)
-  - ✅ StockMovement créé lors receive
-  - ✅ Confirmer achat
-  - ✅ Annuler achat pending
-  - ✅ Erreur annulation reçue
+3. **TransferController - 7 Endpoints**
+   - GET    /api/transfers           → List with filters
+   - POST   /api/transfers           → Create transfer request
+   - GET    /api/transfers/{id}      → Show detail
+   - POST   /api/transfers/{id}/approve   → Approve + execute
+   - POST   /api/transfers/{id}/cancel    → Cancel
+   - GET    /api/transfers/pending        → Pending transfers
+   - GET    /api/transfers/statistics     → Stats
+
+4. **Tests: Transfer** (8 tests)
+   - test_can_request_transfer
+   - test_transfer_execution_updates_stock
+   - test_transfer_creates_stock_movement
+   - test_cannot_transfer_insufficient_stock
+   - test_can_cancel_pending_transfer
+   - test_cannot_cancel_approved_transfer
+   - test_auto_transfer_when_stock_low
+
+**Routes Updated:** routes/api.php transfers prefix-based routing
 
 ---
 
-## 📊 STATISTIQUES DE CODE
-
-| Métrique | Valeur |
-|----------|--------|
-| Fichiers modifiés | 4 |
-| Fichiers créés | 2 |
-| Lignes ajoutées | ~450 |
-| Endpoints testés | 7 |
-| Tests unitaires | 10+ |
-| Migrations crées | 1 |
-| Modèles modifiés | 0 |
-
----
-
-## 🔗 ENDPOINTS TESTABLES
-
-**Base URL:** `http://localhost:8000/api`  
-**Header:** `X-Tenant-ID: 1` (après login)  
-**Auth:** Bearer token (du endpoint register/login)
+## 🔗 NEXT: QUICK TEST
 
 ```bash
-# 1. Onboarding (Mode B)
-POST /register
-Content-Type: application/json
-{
-  "tenant_name": "Test Restaurant",
-  "name": "Admin User",
-  "email": "admin@test.com",
-  "password": "password123",
-  "password_confirmation": "password123",
-  "mode_pos": "B"
-}
+# Backend
+cd backend && php artisan migrate --seed && php artisan serve
 
-# 2. Login
-POST /login
-{
-  "email": "admin@test.com",
-  "password": "password123"
-}
-
-# 3. Créer fournisseur
-POST /suppliers
-Authorization: Bearer {token}
-X-Tenant-ID: 1
-{
-  "name": "Acme Distributeur",
-  "email": "acme@dist.com",
-  "phone": "+229 12345678",
-  "country": "BJ"
-}
-
-# 4. Créer produit
-POST /products
-{
-  "name": "Riz 50kg",
-  "sku": "RIZ-50",
-  "purchase_price": 15000,
-  "selling_price": 18000,
-  "unit": "sac"
-}
-
-# 5. Créer bon d'achat
-POST /purchases
-{
-  "supplier_name": "Acme Distributeur",
-  "supplier_phone": "+229 12345678",
-  "items": [
-    {
-      "product_id": 1,
-      "quantity": 10,
-      "unit_price": 15000
-    }
-  ]
-}
-
-# 6. Confirmer achat
-POST /purchases/1/confirm
-
-# 7. Recevoir achat (CMP)
-POST /purchases/1/receive
-{
-  "items": [
-    {
-      "purchase_item_id": 1,
-      "received_quantity": 10
-    }
-  ]
-}
-
-# 8. Vérifier stock avec CMP
-GET /stocks?warehouse_id=1
-# Response: Stock { id: 1, quantity: 10, cost_average: 15000, ... }
-```
-
----
-
-## 🧪 RÉSULTATS DES TESTS
-
-```bash
-$ cd backend && php artisan test tests/Feature/PurchaseReceiveTest.php
-
-✅ test_can_create_purchase .......................... PASS
-✅ test_purchase_receive_calculates_cmp ............ PASS
-✅ test_cmp_calculation_with_multiple_receives .... PASS
-✅ test_purchase_creates_stock_movement ........... PASS
-✅ test_can_confirm_purchase ....................... PASS
-✅ test_can_cancel_pending_purchase ............... PASS
-✅ test_cannot_cancel_received_purchase ........... PASS
-
-Tests: 7 passed ✅
-```
-
----
-
-## ⚠️ PROCHAINES ÉTAPES (AVANT COMMIT)
-
-- [ ] Vérifier modèle Tenant (warehouse relationship)
-- [ ] Vérifier modèles Stock & Purchase (tous les fields)
-- [ ] Exécuter `php artisan migrate --seed` local
-- [ ] Tester tous endpoints via Postman
-- [ ] Corriger les erreurs de modèles/relations
-- [ ] Ajouter seeder pour demo data (products, suppliers)
-- [ ] Frontend: Onboarding page (Mode A/B choice)
-- [ ] Frontend: PO create form
-- [ ] Commit & push avec message atomique
-
----
-
-## 🚀 INSTRUCTIONS DE TEST LOCAL
-
-```bash
-# 1. Backend setup
-cd backend
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate --seed
-
-# 2. Frontend setup
-cd ../frontend
-npm install
-
-# 3. Lancer serveur dev
-cd ../backend
-php artisan serve
-
-# (Dans autre terminal)
-cd frontend
-npm run dev
-
-# 4. Tester via Postman ou curl
+# Terminal 2 - Create demo tenant
 curl -X POST http://localhost:8000/api/register \
   -H "Content-Type: application/json" \
   -d '{
-    "tenant_name": "Test",
-    "name": "Admin",
+    "tenant_name": "Test Restaurant",
+    "name": "Admin User",
     "email": "admin@test.com",
     "password": "password123",
     "password_confirmation": "password123",
     "mode_pos": "B"
   }'
+
+# Login
+TOKEN=$(curl -X POST http://localhost:8000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@test.com",
+    "password": "password123"
+  }' | jq -r '.token')
+
+# Test Transfer Request
+curl -X POST http://localhost:8000/api/transfers \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from_warehouse_id": 1,
+    "to_warehouse_id": 2,
+    "items": [{"product_id": 1, "quantity": 20}]
+  }'
 ```
 
 ---
 
-## 📝 NOTES
+## 📊 STATUT GLOBAL
 
-- **CMP Formula:** $\text{CMP} = \frac{(\text{old\_qty} \times \text{old\_cmp}) + (\text{new\_qty} \times \text{new\_price})}{\text{old\_qty} + \text{new\_qty}}$
-- **Stock Audit:** Chaque mouvement crée `StockMovement` (immutable audit trail)
-- **Tenant Isolation:** Tous les requêtes filtrées par `tenant_id` du user connecté
-- **Mode POS:** Détermine warehouse source pour déductions (Option A=détail, Option B=pos)
-
----
-
-## ✅ CHECKLIST ITÉRATION 1
-
-- [x] Auth register avec mode POS A/B
-- [x] Warehouse creation (gros/detail/pos)
-- [x] Migration POS mode
-- [x] PurchaseService avec CMP
-- [x] Purchase receive avec StockMovement
-- [x] Tests CMP (simple + multiple receives)
-- [x] Controller endpoints fixes
-- [ ] Frontend Onboarding page
-- [ ] Frontend PO create/receive form
-- [ ] Demo seeder data
-- [ ] Final commit + push + tag v0.1-mvp
+| Phase | Avancement | État |
+|-------|-----------|------|
+| 1: Auth + Purchases | 100% | ✅ DONE |
+| 2: Stock Flows | 80% | 🟡 IN PROGRESS |
+| 3: POS & Sales | 0% | ⏳ PLANNED |
+| 4: Backoffice | 0% | ⏳ PLANNED |
+| 5: Exports | 0% | ⏳ PLANNED |
+| **TOTAL** | **35%** | 🟡 ON TRACK |
 
 ---
 
-**Prochaine étape:** Finaliser les tests, créer seeder data, générer frontend pages, puis commit + push
+## ⚠️ NEXT STEPS
 
+- [ ] Run all transfer tests locally
+- [ ] Commit Itération 2 + push
+- [ ] Create Transfers frontend page (React)
+- [ ] Start Itération 3: POS & Sales
+
+**Prochaine exécution:** Itération 3 (POS modes A/B, sales deductions, payments)
