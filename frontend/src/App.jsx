@@ -2,12 +2,16 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useTenantStore } from './stores/tenantStore';
 import LoginPage from './pages/LoginPage';
+import OnboardingPage from './pages/OnboardingPage';
+import DashboardCompletePage from './pages/DashboardCompletePage';
+import PurchasesPage from './pages/PurchasesPage';
+import TransfersPage from './pages/TransfersPage';
+import SalesPage from './pages/SalesPage';
 import DashboardPage from './pages/DashboardPage';
 import POSPage from './pages/POSPage';
 import ProductsPage from './pages/ProductsPage';
 import InventoryPage from './pages/InventoryPage';
 import ReportsPage from './pages/ReportsPage';
-import OnboardingPage from './pages/OnboardingPage';
 import ChartOfAccountsPage from './pages/ChartOfAccountsPage';
 import Layout from './components/Layout';
 
@@ -34,7 +38,31 @@ export default function App() {
           path="/dashboard"
           element={
             <PrivateRoute>
-              <DashboardPage />
+              <DashboardCompletePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/purchases"
+          element={
+            <PrivateRoute>
+              <PurchasesPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/transfers"
+          element={
+            <PrivateRoute>
+              <TransfersPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/sales"
+          element={
+            <PrivateRoute>
+              <SalesPage />
             </PrivateRoute>
           }
         />

@@ -4,7 +4,7 @@ services:
   # Backend API
   app:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: Dockerfile
     container_name: sigec-app
     restart: unless-stopped
@@ -23,8 +23,8 @@ services:
       - REDIS_PASSWORD=null
       - REDIS_PORT=6379
     volumes:
-      - ./backend:/app
-      - ./backend/storage:/app/storage
+      - ../backend:/app
+      - ../backend/storage:/app/storage
     ports:
       - "8000:8000"
     depends_on:
@@ -37,14 +37,14 @@ services:
   # Frontend
   frontend:
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: Dockerfile
     container_name: sigec-frontend
     restart: unless-stopped
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/app
+      - ../frontend:/app
       - /app/node_modules
     networks:
       - sigec-network
