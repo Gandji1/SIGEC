@@ -14,3 +14,5 @@ coverage/
 *~
 storage/postgres/
 storage/redis/
+.next/
+.vercel/
