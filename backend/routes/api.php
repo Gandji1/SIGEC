@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\TenantController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\PurchaseController;
@@ -29,6 +31,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
+
+    // Tenant Management routes (Super Admin only)
+    Route::middleware('role:super_admin')->prefix('tenants')->group(function () {
+        Route::get('/', [TenantController::class, 'index']);
+        Route::post('/', [TenantController::class, 'store']);
+        Route::get('/{tenant}', [TenantController::class, 'show']);
+        Route::put('/{tenant}', [TenantController::class, 'update']);
+        Route::delete('/{tenant}', [TenantController::class, 'destroy']);
+        Route::post('/{tenant}/suspend', [TenantController::class, 'suspend']);
+        Route::post('/{tenant}/activate', [TenantController::class, 'activate']);
+    });
+
+    // User Management routes (Owner/Manager)
+    Route::middleware('role:owner,manager')->prefix('users')->group(function () {
+        Route::get('/', [UserController::class, 'index']);
+        Route::post('/', [UserController::class, 'store']);
+        Route::get('/{user}', [UserController::class, 'show']);
+        Route::put('/{user}', [UserController::class, 'update']);
+        Route::delete('/{user}', [UserController::class, 'destroy']);
+        Route::post('/{user}/assign-role', [UserController::class, 'assignRole']);
+    });
 
     // Dashboard routes (NEW)
     Route::prefix('dashboard')->group(function () {
