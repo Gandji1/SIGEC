@@ -13,6 +13,9 @@ import ProductsPage from './pages/ProductsPage';
 import InventoryPage from './pages/InventoryPage';
 import ReportsPage from './pages/ReportsPage';
 import ChartOfAccountsPage from './pages/ChartOfAccountsPage';
+import TenantManagementPage from './pages/TenantManagementPage';
+import UsersManagementPage from './pages/UsersManagementPage';
+import SettingsPage from './pages/SettingsPage';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
@@ -103,6 +106,30 @@ export default function App() {
           element={
             <PrivateRoute>
               <ChartOfAccountsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/tenant-management"
+          element={
+            <PrivateRoute>
+              <TenantManagementPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <PrivateRoute>
+              <UsersManagementPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <PrivateRoute>
+              <SettingsPage />
             </PrivateRoute>
           }
         />
