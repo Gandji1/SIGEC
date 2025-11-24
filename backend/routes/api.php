@@ -105,6 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/statistics', [TransferController::class, 'statistics']);
         Route::get('/{transfer}', [TransferController::class, 'show']);
         Route::post('/{transfer}/approve', [TransferController::class, 'approve']);
+        Route::post('/{transfer}/execute', [TransferController::class, 'execute']);
         Route::post('/{transfer}/cancel', [TransferController::class, 'cancel']);
     });
 

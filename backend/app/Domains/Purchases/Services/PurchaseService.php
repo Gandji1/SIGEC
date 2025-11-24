@@ -10,6 +10,7 @@ use App\Models\StockMovement;
 use App\Models\AuditLog;
 use App\Models\AccountingEntry;
 use App\Domains\Stocks\Services\StockService;
+use App\Domains\Accounting\Services\AutoPostingService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Exception;
@@ -139,6 +140,10 @@ class PurchaseService
             $purchase->status = 'received';
             $purchase->received_at = now();
             $purchase->save();
+
+            // Auto-post to GL
+            $autoPostingService = new AutoPostingService($purchase->tenant_id);
+            $autoPostingService->postPurchaseReceived($purchase);
 
             AuditLog::log('update', 'purchase', $purchase->id, ['status' => 'received'], 'Purchase received');
 

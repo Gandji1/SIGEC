@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Stock;
 use App\Models\AuditLog;
 use App\Domains\Stocks\Services\StockService;
+use App\Domains\Accounting\Services\AutoPostingService;
 use Illuminate\Database\Eloquent\Collection;
 use Exception;
 
@@ -88,6 +89,10 @@ class SaleService
         $sale->amount_paid = $amount_paid;
         $sale->payment_method = $payment_method;
         $sale->complete();
+
+        // Auto-post to GL
+        $autoPostingService = new AutoPostingService($sale->tenant_id);
+        $autoPostingService->postSaleCompleted($sale);
 
         AuditLog::log('update', 'sale', $sale->id, 
             ['status' => 'completed', 'amount_paid' => $amount_paid],
