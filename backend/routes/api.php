@@ -77,6 +77,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{inventory}/export-csv', [InventoryController::class, 'exportCSV']);
     });
 
+    // Inventory Reconciliation routes (NEW - Iteration 3)
+    Route::prefix('inventory-counts')->group(function () {
+        Route::post('/start', [InventoryReconciliationController::class, 'start']);
+        Route::post('/{count}/items', [InventoryReconciliationController::class, 'recordItem']);
+        Route::post('/{count}/complete', [InventoryReconciliationController::class, 'complete']);
+        Route::get('/{count}/summary', [InventoryReconciliationController::class, 'summary']);
+        Route::get('/{count}/variances', [InventoryReconciliationController::class, 'variances']);
+        Route::post('/{count}/cancel', [InventoryReconciliationController::class, 'cancel']);
+        Route::get('/{count}/report', [InventoryReconciliationController::class, 'report']);
+    });
+
     // Product routes
     Route::apiResource('products', ProductController::class);
     Route::get('/products/low-stock', [ProductController::class, 'lowStock']);
