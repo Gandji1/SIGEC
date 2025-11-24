@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const useTenantStore = create((set) => ({
+export const useTenantStore = create((set) => ({
   tenant: null,
   user: null,
   token: null,
@@ -11,5 +11,3 @@ const useTenantStore = create((set) => ({
 
   logout: () => set({ tenant: null, user: null, token: null }),
 }));
-
-export default useTenantStore;
