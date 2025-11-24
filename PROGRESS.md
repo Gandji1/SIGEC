@@ -1,13 +1,9 @@
 # 📊 SIGEC PROGRESS - Itérations 1-2
 
-**Date:** 23 Novembre 2025  
-**Branch:** `feature/sigec-complete`  
-**Commits:** 
-- 7602ebe: initial project structure
-- 388c0bd: feat auth + purchases + CMP
-- (en cours) feat transfers + warehouse automation
-
-**Project Status:** 40% → 55% (MVP Core 85% + Stock Flows 60%)
+**Date:** 24 Novembre 2025  
+**Branch:** `main` (Production)  
+**Current Commit:** (pushed after Iteration 1A implementation)
+**Project Status:** 55% → 75% (MVP Core Backend 90% + Dashboard 85% + Frontend UI Complete)
 
 ---
 

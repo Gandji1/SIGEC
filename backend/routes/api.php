@@ -14,6 +14,9 @@ use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\WarehouseController;
 use App\Http\Controllers\Api\InventoryController;
+use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ExpenseController;
+use App\Http\Controllers\Api\ReportController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -26,6 +29,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
+
+    // Dashboard routes (NEW)
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/stats', [DashboardController::class, 'stats']);
+        Route::get('/monthly-report', [DashboardController::class, 'monthlyReport']);
+    });
+
+    // Expenses routes (NEW)
+    Route::prefix('expenses')->group(function () {
+        Route::post('/', [ExpenseController::class, 'store']);
+        Route::get('/', [ExpenseController::class, 'index']);
+    });
+
+    // Reports routes (NEW - enriched)
+    Route::prefix('reports')->group(function () {
+        Route::get('/sales-journal', [ReportController::class, 'salesJournal']);
+        Route::get('/purchases-journal', [ReportController::class, 'purchasesJournal']);
+        Route::get('/profit-loss', [ReportController::class, 'profitLoss']);
+        Route::get('/trial-balance', [ReportController::class, 'trialBalance']);
+        Route::get('/sales-journal/export', [ReportController::class, 'exportSalesXlsx']);
+    });
 
     // Warehouse routes (NEW)
     Route::prefix('warehouses')->group(function () {

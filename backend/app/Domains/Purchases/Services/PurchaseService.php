@@ -151,14 +151,6 @@ class PurchaseService
         return $purchase;
     }
 
-        AuditLog::log('update', 'purchase', $purchase->id, 
-            ['status' => 'received', 'quantities' => $received_quantities],
-            'Purchase received'
-        );
-
-        return $purchase;
-    }
-
     public function cancelPurchase($purchase_id): Purchase
     {
         $purchase = Purchase::findOrFail($purchase_id);
