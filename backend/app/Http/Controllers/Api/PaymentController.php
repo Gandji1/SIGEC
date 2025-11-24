@@ -3,96 +3,192 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
 use App\Models\Sale;
-use App\Domains\Billing\Services\StripePaymentService;
-use Illuminate\Http\JsonResponse;
+use App\Domains\Payments\Services\FedapayAdapter;
+use App\Domains\Payments\Services\KakiapayAdapter;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class PaymentController extends Controller
 {
-    private StripePaymentService $stripeService;
-
     public function __construct()
     {
-        $this->stripeService = new StripePaymentService();
         $this->middleware('auth:sanctum');
     }
 
-    public function createPaymentIntent(Request $request): JsonResponse
+    /**
+     * Initialize payment
+     * POST /api/payments/initialize
+     */
+    public function initialize(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'sale_id' => 'required|integer|exists:sales,id',
-            'amount' => 'required|numeric|min:0',
-            'currency' => 'required|string|size:3',
+        $request->validate([
+            'sale_id' => 'required|exists:sales,id',
+            'phone' => 'required|string',
+            'gateway' => 'required|in:fedapay,kakiapay',
         ]);
 
-        $sale = Sale::find($validated['sale_id']);
+        $tenant = auth()->user()->tenant;
+        $sale = Sale::where('tenant_id', $tenant->id)
+            ->find($request->sale_id);
 
-        if ($sale->tenant_id !== auth()->guard('sanctum')->user()->tenant_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!$sale) {
+            return response()->json(['error' => 'Sale not found'], 404);
         }
 
-        $result = $this->stripeService->createPaymentIntent(
-            $validated['amount'],
-            $validated['currency'],
-            ['sale_id' => $sale->id, 'reference' => $sale->reference]
+        // Instantiate appropriate adapter
+        $adapter = match ($request->gateway) {
+            'fedapay' => new FedapayAdapter($tenant),
+            'kakiapay' => new KakiapayAdapter($tenant),
+        };
+
+        $result = $adapter->initializePayment(
+            $sale,
+            $request->phone,
+            $sale->total
         );
 
-        return response()->json($result);
-    }
-
-    public function confirmPayment(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'sale_id' => 'required|integer|exists:sales,id',
-            'intent_id' => 'required|string',
-        ]);
-
-        $sale = Sale::find($validated['sale_id']);
-
-        if ($sale->tenant_id !== auth()->guard('sanctum')->user()->tenant_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $result = $this->stripeService->confirmPayment($validated['intent_id']);
-
-        if ($result['success']) {
-            $sale->update([
-                'amount_paid' => $sale->total,
-                'payment_method' => 'card',
-                'status' => 'completed',
-                'completed_at' => now(),
-            ]);
+        if (!$result['success']) {
+            return response()->json(['error' => $result['error']], 400);
         }
 
         return response()->json($result);
     }
 
-    public function refund(Request $request): JsonResponse
+    /**
+     * Verify payment (webhook or polling)
+     * POST /api/payments/verify
+     */
+    public function verify(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'sale_id' => 'required|integer|exists:sales,id',
-            'amount' => 'nullable|numeric',
+        $request->validate([
+            'reference' => 'required|string',
+            'gateway' => 'required|in:fedapay,kakiapay',
         ]);
 
-        $sale = Sale::find($validated['sale_id']);
+        $tenant = auth()->user()->tenant;
 
-        if ($sale->tenant_id !== auth()->guard('sanctum')->user()->tenant_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        $adapter = match ($request->gateway) {
+            'fedapay' => new FedapayAdapter($tenant),
+            'kakiapay' => new KakiapayAdapter($tenant),
+        };
+
+        $result = $adapter->verifyPayment($request->reference);
+
+        if (!$result['success']) {
+            return response()->json(['error' => 'Payment verification failed'], 400);
         }
 
-        if ($sale->status !== 'completed') {
-            return response()->json(['message' => 'Only completed sales can be refunded'], 422);
+        // Update sale payment record
+        $sale = Sale::where('tenant_id', $tenant->id)
+            ->where('id', $result['metadata']['sale_id'] ?? null)
+            ->first();
+
+        if ($sale) {
+            $adapter->recordPayment(
+                $sale,
+                $request->reference,
+                $result['amount'],
+                $request->gateway
+            );
+
+            $sale->update(['payment_status' => 'paid']);
         }
 
-        $result = $this->stripeService->refundPayment(
-            $sale->metadata['transaction_id'] ?? null,
-            $validated['amount'] ?? $sale->total
-        );
+        return response()->json($result);
+    }
+
+    /**
+     * Fedapay webhook callback
+     * POST /payments/fedapay/callback
+     */
+    public function fedapayCallback(Request $request): JsonResponse
+    {
+        $data = $request->all();
+        $metadata = $data['metadata'] ?? [];
+
+        $tenant = Tenant::find($metadata['tenant_id']);
+        if (!$tenant) {
+            return response()->json(['error' => 'Tenant not found'], 404);
+        }
+
+        $adapter = new FedapayAdapter($tenant);
+        $result = $adapter->verifyPayment($data['token'] ?? $data['id']);
 
         if ($result['success']) {
-            $sale->update(['status' => 'returned']);
+            $sale = Sale::where('tenant_id', $tenant->id)
+                ->find($metadata['sale_id']);
+
+            if ($sale) {
+                $adapter->recordPayment(
+                    $sale,
+                    $data['token'] ?? $data['id'],
+                    $result['amount'],
+                    'fedapay'
+                );
+
+                $sale->update(['payment_status' => 'paid']);
+            }
         }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Kakiapay webhook callback
+     * POST /payments/kakiapay/callback
+     */
+    public function kakiapayCallback(Request $request): JsonResponse
+    {
+        $data = $request->all();
+        $metadata = $data['metadata'] ?? [];
+
+        $tenant = Tenant::find($metadata['tenant_id']);
+        if (!$tenant) {
+            return response()->json(['error' => 'Tenant not found'], 404);
+        }
+
+        $adapter = new KakiapayAdapter($tenant);
+        $result = $adapter->verifyPayment($data['reference']);
+
+        if ($result['success']) {
+            $sale = Sale::where('tenant_id', $tenant->id)
+                ->find($metadata['sale_id']);
+
+            if ($sale) {
+                $adapter->recordPayment(
+                    $sale,
+                    $data['reference'],
+                    $result['amount'],
+                    'kakiapay'
+                );
+
+                $sale->update(['payment_status' => 'paid']);
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Get payment status
+     * GET /api/payments/{reference}/status
+     */
+    public function status(string $reference, Request $request): JsonResponse
+    {
+        $request->validate([
+            'gateway' => 'required|in:fedapay,kakiapay',
+        ]);
+
+        $tenant = auth()->user()->tenant;
+
+        $adapter = match ($request->gateway) {
+            'fedapay' => new FedapayAdapter($tenant),
+            'kakiapay' => new KakiapayAdapter($tenant),
+        };
+
+        $result = $adapter->getTransactionStatus($reference);
 
         return response()->json($result);
     }

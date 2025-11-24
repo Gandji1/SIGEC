@@ -159,11 +159,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/accounting/report', [ExportController::class, 'exportAccountingReport']);
     });
 
-    // Payment routes
+    // Payment routes (PSP - Fedapay/Kakiapay)
     Route::prefix('payments')->group(function () {
-        Route::post('/intent', [PaymentController::class, 'createPaymentIntent']);
-        Route::post('/confirm', [PaymentController::class, 'confirmPayment']);
-        Route::post('/refund', [PaymentController::class, 'refundPayment']);
+        Route::post('/initialize', [PaymentController::class, 'initialize']);
+        Route::post('/verify', [PaymentController::class, 'verify']);
+        Route::get('/{reference}/status', [PaymentController::class, 'status']);
     });
 });
+
+// Public PSP webhook routes
+Route::post('/payments/fedapay/callback', [PaymentController::class, 'fedapayCallback']);
+Route::post('/payments/kakiapay/callback', [PaymentController::class, 'kakiapayCallback']);
 
