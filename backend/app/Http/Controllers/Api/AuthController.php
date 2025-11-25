@@ -34,20 +34,20 @@ class AuthController extends Controller
             'mode_pos' => $validated['mode_pos'],
             'currency' => $validated['currency'] ?? 'XOF',
             'country' => $validated['country'] ?? 'BJ',
-            'tax_id' => $validated['tax_id'],
+            'tax_id' => $validated['tax_id'] ?? null,
             'accounting_enabled' => true,
         ]);
 
         // Créer les warehouses par défaut selon le mode
         if ($validated['mode_pos'] === 'A') {
             // Mode A: gros et détail
-            Warehouse::create(['tenant_id' => $tenant->id, 'name' => 'Gros', 'type' => 'gros']);
-            Warehouse::create(['tenant_id' => $tenant->id, 'name' => 'Détail', 'type' => 'detail']);
+            Warehouse::create(['tenant_id' => $tenant->id, 'code' => 'WH-GROS', 'name' => 'Gros', 'type' => 'gros']);
+            Warehouse::create(['tenant_id' => $tenant->id, 'code' => 'WH-DETAIL', 'name' => 'Détail', 'type' => 'detail']);
         } else {
             // Mode B: gros, détail et POS
-            Warehouse::create(['tenant_id' => $tenant->id, 'name' => 'Gros', 'type' => 'gros']);
-            Warehouse::create(['tenant_id' => $tenant->id, 'name' => 'Détail', 'type' => 'detail']);
-            Warehouse::create(['tenant_id' => $tenant->id, 'name' => 'POS', 'type' => 'pos']);
+            Warehouse::create(['tenant_id' => $tenant->id, 'code' => 'WH-GROS', 'name' => 'Gros', 'type' => 'gros']);
+            Warehouse::create(['tenant_id' => $tenant->id, 'code' => 'WH-DETAIL', 'name' => 'Détail', 'type' => 'detail']);
+            Warehouse::create(['tenant_id' => $tenant->id, 'code' => 'WH-POS', 'name' => 'POS', 'type' => 'pos']);
         }
 
         // Créer l'utilisateur admin
@@ -63,6 +63,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
+            'success' => true,
             'message' => 'Tenant créé avec succès (Mode ' . $validated['mode_pos'] . ')',
             'user' => $user,
             'tenant' => $tenant,
@@ -104,6 +105,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
+            'success' => true,
             'message' => 'Login successful',
             'user' => $user,
             'tenant' => $user->tenant,
@@ -116,6 +118,7 @@ class AuthController extends Controller
         $user = auth()->guard('sanctum')->user()->load('tenant');
 
         return response()->json([
+            'success' => true,
             'user' => $user,
             'tenant' => $user->tenant,
         ]);
@@ -125,7 +128,7 @@ class AuthController extends Controller
     {
         auth()->guard('sanctum')->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Logged out successfully']);
+        return response()->json(['success' => true, 'message' => 'Logged out successfully']);
     }
 
     public function changePassword(Request $request): JsonResponse
@@ -147,6 +150,6 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return response()->json(['message' => 'Password changed successfully']);
+        return response()->json(['success' => true, 'message' => 'Password changed successfully']);
     }
 }

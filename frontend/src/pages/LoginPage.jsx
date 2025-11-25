@@ -29,18 +29,27 @@ export default function LoginPage() {
     setError('');
 
     try {
+      console.log('[LoginPage] Attempting login with:', formData.email);
       const response = await apiClient.post('/login', {
         email: formData.email,
         password: formData.password,
       });
 
-      setToken(response.data.token);
-      setUser(response.data.user);
-      setTenant(response.data.tenant);
-
-      navigate('/dashboard');
+      console.log('[LoginPage] Login response:', response.data);
+      
+      if (response.data?.token) {
+        setToken(response.data.token);
+        setUser(response.data.user);
+        setTenant(response.data.tenant);
+        console.log('[LoginPage] Navigating to dashboard');
+        navigate('/dashboard');
+      } else {
+        setError('No token received from server');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      console.error('[LoginPage] Login error:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Login failed';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

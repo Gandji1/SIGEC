@@ -132,7 +132,28 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('Database seeded successfully with test data!');
 
-        // Call the demo seeder for restaurant scenario
-        $this->call(DemoDataSeeder::class);
+        // Call RBAC seeder
+        $this->call(RBACSeeder::class);
+        
+        // Create super_admin user
+        $superAdminTenant = Tenant::create([
+            'name' => 'Demo Tenant',
+            'slug' => 'demo-tenant',
+            'domain' => 'demo.sigec.local',
+            'currency' => 'XOF',
+            'status' => 'active',
+            'business_type' => 'retail',
+            'mode_pos' => 'A',
+            'accounting_enabled' => 1,
+        ]);
+
+        User::create([
+            'tenant_id' => $superAdminTenant->id,
+            'name' => 'Super Admin',
+            'email' => 'super@demo.local',
+            'password' => Hash::make('demo12345'),
+            'role' => 'super_admin',
+            'status' => 'active',
+        ]);
     }
 }

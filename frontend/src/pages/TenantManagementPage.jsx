@@ -24,20 +24,22 @@ export default function TenantManagementPage() {
   }, [user]);
 
   const fetchTenants = async () => {
+    setLoading(true);
     try {
-      // Placeholder - replace with actual API when backend deployed
-      setTenants([
-        {
-          id: 1,
-          name: 'Démo Enterprise',
-          email: 'demo@sigec.app',
-          status: 'active',
-          users: 5,
-          plan: 'professional',
-        },
-      ]);
+      const res = await apiClient.get('/tenants');
+      const list = res.data?.data || [];
+      setTenants(list.map(t => ({
+        id: t.id,
+        name: t.name,
+        email: t.email || '-',
+        status: t.status || 'active',
+        users: t.users?.length || 0,
+        plan: t.plan || 'starter'
+      })));
+      setError('');
     } catch (err) {
-      setError('Erreur lors du chargement des tenants');
+      setError(err.response?.data?.message || 'Erreur lors du chargement des tenants');
+      setTenants([]);
     } finally {
       setLoading(false);
     }
@@ -46,27 +48,32 @@ export default function TenantManagementPage() {
   const handleCreateTenant = async (e) => {
     e.preventDefault();
     setError('');
-
+    setSuccess('');
     try {
-      // Call backend when deployed
-      const response = await apiClient.post('/tenants', formData);
-
-      setSuccess('Tenant créé avec succès!');
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        country: 'BJ',
-        currency: 'XOF',
-      });
-      setShowModal(false);
-
-      // Refresh list
-      fetchTenants();
-
-      setTimeout(() => setSuccess(''), 3000);
+      const payload = {
+        name: formData.name.trim(),
+        slug: formData.name.trim().toLowerCase().replace(/\s+/g, '-'),
+        domain: formData.name.trim().toLowerCase().replace(/\s+/g, '-') + '.sigec.local',
+        business_type: 'retail'
+      };
+      const res = await apiClient.post('/tenants', payload);
+      if (res.data?.success) {
+        setSuccess(`✅ Tenant créé: ${res.data.data.name}`);
+        setShowModal(false);
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          country: 'BJ',
+          currency: 'XOF',
+        });
+        fetchTenants();
+        setTimeout(() => setSuccess(''), 4000);
+      } else {
+        setError('Réponse inattendue du serveur');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors de la création');
+      setError(err.response?.data?.message || err.message || 'Erreur lors de la création');
     }
   };
 

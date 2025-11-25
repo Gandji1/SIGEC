@@ -11,20 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('warehouses', function (Blueprint $table) {
+        Schema::create('expenses', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('tenant_id')->index();
-            $table->string('code')->unique();
-            $table->string('name');
-            $table->enum('type', ['gros', 'detail', 'pos'])->default('detail');
-            $table->string('location')->nullable();
-            $table->decimal('max_capacity', 12, 2)->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->unsignedBigInteger('user_id')->index();
+            $table->string('category');
+            $table->string('description');
+            $table->decimal('amount', 12, 2);
+            $table->date('date');
             $table->timestamps();
-            $table->softDeletes();
 
-            // Foreign keys
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
@@ -33,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('warehouses');
+        Schema::dropIfExists('expenses');
     }
 };

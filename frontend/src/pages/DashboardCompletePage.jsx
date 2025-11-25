@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Package, TrendingUp, Warehouse, ShoppingCart, DollarSign, LogOut } from 'lucide-react';
+import { useTenantStore } from '../stores/tenantStore';
+import apiClient from '../services/apiClient';
 
 export default function DashboardCompletePage() {
   const navigate = useNavigate();
+  const { token, tenant, logout } = useTenantStore();
   const [stats, setStats] = useState({
     totalStock: 0,
     totalValue: 0,
@@ -16,64 +19,81 @@ export default function DashboardCompletePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const token = localStorage.getItem('token');
-  const tenant = JSON.parse(localStorage.getItem('tenant') || '{}');
-
   useEffect(() => {
     if (!token) {
       navigate('/login');
       return;
     }
     fetchData();
-  }, [token]);
+  }, [token, navigate]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const headers = { 'Authorization': `Bearer ${token}` };
+      setError(null);
 
       // Fetch warehouses
-      const whRes = await fetch('http://localhost:8000/api/warehouses', { headers });
-      const whData = await whRes.json();
-      setWarehouses(whData.data || []);
+      try {
+        const whRes = await apiClient.get('/warehouses');
+        setWarehouses(whRes.data?.data || []);
+      } catch (e) {
+        console.error('[Dashboard] Warehouses error:', e.message);
+        setWarehouses([]);
+      }
 
       // Fetch stocks
-      const stockRes = await fetch('http://localhost:8000/api/stocks', { headers });
-      const stockData = await stockRes.json();
-      const stocks = stockData.data || [];
-      
-      const totalStock = stocks.reduce((sum, s) => sum + s.quantity, 0);
-      const totalValue = stocks.reduce((sum, s) => sum + (s.quantity * (s.cost_average || 0)), 0);
-      
-      // Fetch transfers
-      const tfRes = await fetch('http://localhost:8000/api/transfers', { headers });
-      const tfData = await tfRes.json();
-      const tfList = tfData.data || [];
-      const pendingTransfers = tfList.filter(t => t.status === 'pending').length;
-      
-      setStats({
-        totalStock,
-        totalValue: Math.round(totalValue),
-        pendingTransfers,
-        purchases: 0
-      });
+      try {
+        const stockRes = await apiClient.get('/stocks');
+        const stocks = stockRes.data?.data || [];
+        
+        const totalStock = stocks.reduce((sum, s) => sum + (s.quantity || 0), 0);
+        const totalValue = stocks.reduce((sum, s) => sum + ((s.quantity || 0) * (s.cost_average || 0)), 0);
+        
+        setProducts(stocks);
+        
+        // Fetch transfers
+        try {
+          const tfRes = await apiClient.get('/transfers');
+          const tfList = tfRes.data?.data || [];
+          const pendingTransfers = tfList.filter(t => t.status === 'pending').length;
+          
+          setStats({
+            totalStock,
+            totalValue: Math.round(totalValue),
+            pendingTransfers,
+            purchases: 0
+          });
 
-      setTransfers(tfList.slice(0, 5)); // Last 5 transfers
-      setProducts(stocks);
+          setTransfers(tfList.slice(0, 5));
+        } catch (e) {
+          console.error('[Dashboard] Transfers error:', e.message);
+          setTransfers([]);
+        }
+      } catch (err) {
+        console.error('[Dashboard] Stocks error:', err.message);
+        setProducts([]);
+      }
     } catch (err) {
-      setError(err.message);
+      console.error('[Dashboard] Error:', err);
+      setError(err.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('tenant');
+    logout();
     navigate('/login');
   };
 
-  if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="text-center">
+        <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-slate-300">Loading dashboard...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">

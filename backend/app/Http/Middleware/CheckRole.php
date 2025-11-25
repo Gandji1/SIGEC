@@ -19,7 +19,13 @@ class CheckRole
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $userRoles = $user->roles()->pluck('slug')->toArray();
+        // First check if user has any explicit role (via pivot table)
+        $userRoles = $user->roles()->pluck('name')->toArray();
+        
+        // If no pivot roles, fall back to user.role field (for backward compat)
+        if (empty($userRoles) && $user->role) {
+            $userRoles = [$user->role];
+        }
         
         foreach ($roles as $role) {
             if (in_array($role, $userRoles)) {

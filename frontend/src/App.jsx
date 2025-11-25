@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useTenantStore } from './stores/tenantStore';
 import LoginPage from './pages/LoginPage';
 import OnboardingPage from './pages/OnboardingPage';
+import AdaptiveDashboard from './pages/AdaptiveDashboard';
 import DashboardCompletePage from './pages/DashboardCompletePage';
 import PurchasesPage from './pages/PurchasesPage';
 import TransfersPage from './pages/TransfersPage';
@@ -16,6 +17,12 @@ import ChartOfAccountsPage from './pages/ChartOfAccountsPage';
 import TenantManagementPage from './pages/TenantManagementPage';
 import UsersManagementPage from './pages/UsersManagementPage';
 import SettingsPage from './pages/SettingsPage';
+import SuppliersPage from './pages/SuppliersPage';
+import CustomersPage from './pages/CustomersPage';
+import ExpensesPage from './pages/ExpensesPage';
+import AccountingPage from './pages/AccountingPage';
+import ManagerDashboard from './pages/ManagerDashboard';
+import AccountantDashboard from './pages/AccountantDashboard';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
@@ -41,7 +48,7 @@ export default function App() {
           path="/dashboard"
           element={
             <PrivateRoute>
-              <DashboardCompletePage />
+              <AdaptiveDashboard />
             </PrivateRoute>
           }
         />
@@ -130,6 +137,38 @@ export default function App() {
           element={
             <PrivateRoute>
               <SettingsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/suppliers"
+          element={
+            <PrivateRoute>
+              <SuppliersPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/customers"
+          element={
+            <PrivateRoute>
+              <CustomersPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/expenses"
+          element={
+            <PrivateRoute>
+              <ExpensesPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/accounting"
+          element={
+            <PrivateRoute>
+              <AccountingPage />
             </PrivateRoute>
           }
         />

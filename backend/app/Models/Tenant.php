@@ -27,6 +27,8 @@ class Tenant extends Model
         'settings',
         'status',
         'subscription_expires_at',
+        'mode_pos',
+        'accounting_enabled',
     ];
 
     protected $casts = [

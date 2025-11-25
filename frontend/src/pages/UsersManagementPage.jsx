@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTenantStore } from '../stores/tenantStore';
+import { usePermission } from '../hooks/usePermission';
+import RoleGate from '../components/RoleGate';
 import apiClient from '../services/apiClient';
 
 export default function UsersManagementPage() {
+  const navigate = useNavigate();
   const { user, tenant } = useTenantStore();
+  const { can } = usePermission();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -11,20 +16,38 @@ export default function UsersManagementPage() {
     name: '',
     email: '',
     password: '',
-    role: 'employee',
+    role: 'manager',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const roles = [
-    { value: 'owner', label: 'Propriétaire', color: 'purple' },
     { value: 'manager', label: 'Gérant', color: 'blue' },
     { value: 'accountant', label: 'Comptable', color: 'yellow' },
-    { value: 'warehouse', label: 'Magasinier', color: 'green' },
-    { value: 'cashier', label: 'Caissier', color: 'red' },
+    { value: 'magasinier_gros', label: 'Magasinier Gros', color: 'green' },
+    { value: 'magasinier_detail', label: 'Magasinier Détail', color: 'green' },
+    { value: 'caissier', label: 'Caissier', color: 'red' },
     { value: 'pos_server', label: 'Serveur POS', color: 'pink' },
     { value: 'auditor', label: 'Auditeur', color: 'gray' },
   ];
+
+  // RBAC Check: Owner only
+  if (!can('users.list')) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-2">Accès Refusé</h1>
+          <p className="text-gray-600 mb-6">Vous n'avez pas les permissions nécessaires pour gérer les utilisateurs</p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Retour au dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     fetchUsers();
@@ -32,19 +55,14 @@ export default function UsersManagementPage() {
 
   const fetchUsers = async () => {
     try {
-      // Placeholder - replace with actual API
-      setUsers([
-        {
-          id: 1,
-          name: 'Demo User',
-          email: 'demo@sigec.app',
-          role: 'owner',
-          status: 'active',
-          createdAt: '2024-01-15',
-        },
-      ]);
+      const res = await apiClient.get('/users');
+      const usersList = res.data?.data || [];
+      setUsers(usersList);
+      setError('');
     } catch (err) {
-      setError('Erreur lors du chargement des utilisateurs');
+      console.error('[UsersPage] Error:', err);
+      setError(err.response?.data?.message || 'Erreur lors du chargement');
+      setUsers([]);
     } finally {
       setLoading(false);
     }
