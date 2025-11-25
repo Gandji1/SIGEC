@@ -174,7 +174,7 @@ class InventoryController extends Controller
     /**
      * Valider l'inventaire (avant transmission au comptable)
      */
-    public function validate(Inventory $inventory): JsonResponse
+    public function validateInventory(Inventory $inventory): JsonResponse
     {
         try {
             $this->authorize('update', $inventory);

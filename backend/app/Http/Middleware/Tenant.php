@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 
-class EnsureTenantMiddleware
+class Tenant
 {
     public function handle(Request $request, Closure $next)
     {

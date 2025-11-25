@@ -182,10 +182,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('accounting')->group(function () {
         Route::get('/ledger', [AccountingController::class, 'ledger']);
         Route::get('/trial-balance', [AccountingController::class, 'trialBalance']);
+        Route::get('/balance', [AccountingController::class, 'trialBalance']); // Alias
+        Route::get('/journals', [AccountingController::class, 'ledger']); // Alias
         Route::get('/income-statement', [AccountingController::class, 'incomeStatement']);
         Route::get('/balance-sheet', [AccountingController::class, 'balanceSheet']);
         Route::post('/post-entries', [AccountingController::class, 'postEntry']);
         Route::get('/summary', [AccountingController::class, 'summary']);
+    });
+
+    // Report routes aliases
+    Route::prefix('reports')->group(function () {
+        Route::get('/sales', [ReportController::class, 'salesJournal']); // Alias
     });
 
     // Export routes
