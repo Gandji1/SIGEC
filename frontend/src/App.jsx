@@ -19,7 +19,6 @@ import TenantConfigurationPage from './pages/TenantConfigurationPage';
 import PaymentConfigurationPage from './pages/PaymentConfigurationPage';
 import ExpenseTrackingPage from './pages/ExpenseTrackingPage';
 import UsersManagementPage from './pages/UsersManagementPage';
-import CollaboratorsPage from './pages/CollaboratorsPage';
 import SettingsPage from './pages/SettingsPage';
 import SuppliersPage from './pages/SuppliersPage';
 import CustomersPage from './pages/CustomersPage';
@@ -167,14 +166,6 @@ export default function App() {
           element={
             <PrivateRoute>
               <UsersManagementPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/collaborators"
-          element={
-            <PrivateRoute>
-              <CollaboratorsPage />
             </PrivateRoute>
           }
         />

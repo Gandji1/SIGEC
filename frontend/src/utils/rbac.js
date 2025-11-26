@@ -158,7 +158,6 @@ export function getAccessibleRoutes(userRole) {
     owner: {
       ...baseRoutes,
       tenant_config: { label: 'Configuration Tenant', icon: '⚙️', path: '/tenant-configuration' },
-      collaborators: { label: 'Collaborateurs', icon: '👫', path: '/collaborators' },
       users: { label: 'Utilisateurs', icon: '👥', path: '/users-management' },
       suppliers: { label: 'Fournisseurs', icon: '🏭', path: '/suppliers' },
       customers: { label: 'Clients', icon: '👤', path: '/customers' },
@@ -178,7 +177,6 @@ export function getAccessibleRoutes(userRole) {
     admin: {  // Alias for owner (same routes)
       ...baseRoutes,
       tenant_config: { label: 'Configuration Tenant', icon: '⚙️', path: '/tenant-configuration' },
-      collaborators: { label: 'Collaborateurs', icon: '👫', path: '/collaborators' },
       users: { label: 'Utilisateurs', icon: '👥', path: '/users-management' },
       suppliers: { label: 'Fournisseurs', icon: '🏭', path: '/suppliers' },
       customers: { label: 'Clients', icon: '👤', path: '/customers' },

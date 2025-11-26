@@ -12,11 +12,14 @@ export default function UsersManagementPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
+    phone: '',
     role: 'manager',
+    status: 'active',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -73,22 +76,42 @@ export default function UsersManagementPage() {
     setError('');
 
     try {
-      // Call backend
-      const response = await apiClient.post('/users', formData);
+      if (editingUser) {
+        // Update existing user
+        await apiClient.put(`/users/${editingUser.id}`, {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          role: formData.role,
+          status: formData.status,
+          password: formData.password || undefined,
+        });
+        setSuccess('Utilisateur mis à jour avec succès!');
+      } else {
+        // Create new user
+        if (!formData.password) {
+          setError('Le mot de passe est requis pour un nouvel utilisateur');
+          return;
+        }
+        await apiClient.post('/users', formData);
+        setSuccess('Utilisateur créé avec succès!');
+      }
 
-      setSuccess('Utilisateur créé avec succès!');
       setFormData({
         name: '',
         email: '',
         password: '',
-        role: 'employee',
+        phone: '',
+        role: 'manager',
+        status: 'active',
       });
+      setEditingUser(null);
       setShowModal(false);
 
       fetchUsers();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Erreur lors de la création');
+      setError(err.response?.data?.message || 'Erreur lors de l\'opération');
     }
   };
 
@@ -104,6 +127,31 @@ export default function UsersManagementPage() {
     }
   };
 
+  const handleEditUser = (u) => {
+    setEditingUser(u);
+    setFormData({
+      name: u.name,
+      email: u.email,
+      phone: u.phone || '',
+      role: u.role,
+      status: u.status || 'active',
+      password: '',
+    });
+    setShowModal(true);
+  };
+
+  const handleResetPassword = async (userId) => {
+    if (window.confirm('Réinitialiser le mot de passe de cet utilisateur?')) {
+      try {
+        const res = await apiClient.post(`/users/${userId}/reset-password`);
+        setSuccess(`Nouveau mot de passe: ${res.data.temp_password}`);
+        setTimeout(() => setSuccess(''), 5000);
+      } catch (err) {
+        setError('Erreur lors de la réinitialisation');
+      }
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Chargement...</div>;
   }
@@ -113,8 +161,8 @@ export default function UsersManagementPage() {
       {/* Header */}
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">👥 Collaborateurs</h1>
-          <p className="text-gray-600">Gérez les utilisateurs du tenant</p>
+          <h1 className="text-3xl font-bold text-gray-800">👥 Utilisateurs</h1>
+          <p className="text-gray-600">Gérez les utilisateurs et collaborateurs du tenant</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -172,8 +220,17 @@ export default function UsersManagementPage() {
                   </td>
                   <td className="px-6 py-4 text-gray-600">{u.createdAt}</td>
                   <td className="px-6 py-4 space-x-2">
-                    <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">
+                    <button
+                      onClick={() => handleEditUser(u)}
+                      className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                    >
                       Éditer
+                    </button>
+                    <button
+                      onClick={() => handleResetPassword(u.id)}
+                      className="text-yellow-600 hover:text-yellow-700 font-medium text-sm"
+                    >
+                      MDP
                     </button>
                     <button
                       onClick={() => handleDeleteUser(u.id)}
@@ -189,14 +246,27 @@ export default function UsersManagementPage() {
         </table>
       </div>
 
-      {/* Modal Ajouter Utilisateur */}
+      {/* Modal Ajouter/Éditer Utilisateur */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h2 className="text-xl font-bold">Ajouter un Collaborateur</h2>
+              <h2 className="text-xl font-bold">
+                {editingUser ? 'Éditer Utilisateur' : 'Ajouter un Utilisateur'}
+              </h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setEditingUser(null);
+                  setFormData({
+                    name: '',
+                    email: '',
+                    password: '',
+                    phone: '',
+                    role: 'manager',
+                    status: 'active',
+                  });
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 ✕
@@ -206,51 +276,67 @@ export default function UsersManagementPage() {
             <form onSubmit={handleCreateUser} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom Complet
+                  Nom Complet <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
+                  Email <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  disabled={!!editingUser}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mot de passe
+                  Téléphone
+                </label>
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  placeholder="+229 XXXXXXXX"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mot de passe {!editingUser && <span className="text-red-500">*</span>}
                 </label>
                 <input
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  required
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  placeholder={editingUser ? 'Laisser vide pour ne pas changer' : ''}
+                  required={!editingUser}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Rôle
+                  Rôle <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  required
                 >
                   {roles.map((r) => (
                     <option key={r.value} value={r.value}>
@@ -260,10 +346,38 @@ export default function UsersManagementPage() {
                 </select>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              {editingUser && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Statut
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="active">Actif</option>
+                    <option value="inactive">Inactif</option>
+                    <option value="suspended">Suspendu</option>
+                  </select>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4 border-t">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingUser(null);
+                    setFormData({
+                      name: '',
+                      email: '',
+                      password: '',
+                      phone: '',
+                      role: 'manager',
+                      status: 'active',
+                    });
+                  }}
                   className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 py-2 rounded-lg font-medium transition"
                 >
                   Annuler
@@ -272,7 +386,7 @@ export default function UsersManagementPage() {
                   type="submit"
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition"
                 >
-                  Créer
+                  {editingUser ? 'Mettre à jour' : 'Créer'}
                 </button>
               </div>
             </form>
