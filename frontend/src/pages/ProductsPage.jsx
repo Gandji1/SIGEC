@@ -9,6 +9,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -42,11 +43,22 @@ export default function ProductsPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
+      // Convert price fields to numbers
+      const submitData = {
+        ...formData,
+        purchase_price: parseFloat(formData.purchase_price),
+        selling_price: parseFloat(formData.selling_price),
+        min_stock: parseInt(formData.min_stock) || 0,
+        max_stock: parseInt(formData.max_stock) || 0,
+        tax_percent: parseFloat(formData.tax_percent) || 0,
+      };
+
       if (editing) {
-        await apiClient.put(`/products/${editing.id}`, formData);
+        await apiClient.put(`/products/${editing.id}`, submitData);
       } else {
-        await apiClient.post('/products', formData);
+        await apiClient.post('/products', submitData);
       }
       setShowForm(false);
       setEditing(null);
@@ -65,6 +77,11 @@ export default function ProductsPage() {
       fetchProducts();
     } catch (error) {
       console.error('Error saving product:', error);
+      const message = error.response?.data?.message || 
+                     error.response?.data?.error || 
+                     error.message || 
+                     'Erreur lors de la sauvegarde';
+      setError(message);
     }
   };
 
@@ -88,6 +105,7 @@ export default function ProductsPage() {
   const handleCancel = () => {
     setShowForm(false);
     setEditing(null);
+    setError('');
     setFormData({
       code: '',
       name: '',
@@ -119,6 +137,11 @@ export default function ProductsPage() {
           <h2 className="text-xl font-bold mb-4">
             {editing ? 'Éditer Produit' : 'Ajouter Produit'}
           </h2>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
             <input
               type="text"

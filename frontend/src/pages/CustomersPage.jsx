@@ -203,15 +203,15 @@ export default function CustomersPage() {
               className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <select
-              value={formData.category || 'individual'}
+              value={formData.category || 'retail'}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
-              <option value="individual">Particulier</option>
-              <option value="business">Entreprise</option>
-              <option value="vip">VIP</option>
-              <option value="prospect">Prospect</option>
+              <option value="retail">Détail</option>
+              <option value="wholesale">Gros</option>
+              <option value="distributor">Distributeur</option>
+              <option value="other">Autre</option>
             </select>
             <input
               type="number"
