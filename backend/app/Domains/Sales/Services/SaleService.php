@@ -52,6 +52,12 @@ class SaleService
         }
 
         $unit_price = $unit_price ?? $product->selling_price;
+        
+        // Calculate totals before creation
+        $line_subtotal = $quantity * $unit_price;
+        $tax_percent = $product->tax_percent ?? 0;
+        $tax_amount = $tax_percent > 0 ? ($line_subtotal * $tax_percent) / 100 : 0;
+        $line_total = $line_subtotal + $tax_amount;
 
         $item = SaleItem::create([
             'tenant_id' => $sale->tenant_id,
@@ -59,12 +65,12 @@ class SaleService
             'product_id' => $product_id,
             'quantity' => $quantity,
             'unit_price' => $unit_price,
-            'tax_percent' => $product->tax_percent,
+            'line_subtotal' => $line_subtotal,
+            'tax_percent' => $tax_percent,
+            'tax_amount' => $tax_amount,
+            'line_total' => $line_total,
             'unit' => $product->unit,
         ]);
-
-        $item->calculateTotals();
-        $item->save();
 
         $sale->calculateTotals();
         $sale->save();
