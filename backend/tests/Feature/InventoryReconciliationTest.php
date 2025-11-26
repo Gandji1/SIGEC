@@ -48,6 +48,7 @@ class InventoryReconciliationTest extends TestCase
             'warehouse_id' => $this->warehouse->id,
             'quantity' => 100,
             'cost_average' => 10.00,
+            'unit_cost' => 10.00,
             'available' => 100,
             'reserved' => 0,
         ]);

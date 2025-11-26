@@ -40,6 +40,20 @@ const ROLE_PERMISSIONS = {
     'reports.view', 'reports.export', 'audit.view', 'psp.delegate'
   ],
 
+  admin: [  // Alias for owner (for backward compatibility)
+    'tenant.view', 'tenant.edit', 'users.list', 'users.create', 'users.edit', 'users.delete',
+    'roles.assign', 'warehouses.manage', 'suppliers.list', 'suppliers.create', 'suppliers.edit', 'suppliers.delete',
+    'customers.list', 'customers.create', 'customers.edit', 'customers.delete',
+    'purchases.list', 'purchases.create', 'purchases.receive', 'purchases.manage',
+    'sales.list', 'sales.validate', 'sales.view', 'sales.manage',
+    'transfers.list', 'transfers.create', 'transfers.approve', 'transfers.manage',
+    'stocks.view', 'stocks.adjust', 'stocks.move',
+    'inventories.list', 'inventories.manage', 'inventories.validate',
+    'accounting.view', 'accounting.post', 'accounting.close-period', 'accounting.export',
+    'charges.list', 'charges.create', 'charges.edit', 'charges.manage',
+    'reports.view', 'reports.export', 'audit.view', 'psp.delegate'
+  ],
+
   manager: [
     'tenant.view', 'dashboard.manager', 'purchases.list', 'purchases.create', 'purchases.receive',
     'sales.list', 'sales.validate', 'sales.view', 'stocks.view', 'stocks.adjust', 'stocks.move',
@@ -143,15 +157,40 @@ export function getAccessibleRoutes(userRole) {
 
     owner: {
       ...baseRoutes,
-      users: { label: 'Utilisateurs', icon: '👥', path: '/users' },
+      tenant_config: { label: 'Configuration Tenant', icon: '⚙️', path: '/tenant-configuration' },
+      collaborators: { label: 'Collaborateurs', icon: '👫', path: '/collaborators' },
+      users: { label: 'Utilisateurs', icon: '👥', path: '/users-management' },
       suppliers: { label: 'Fournisseurs', icon: '🏭', path: '/suppliers' },
       customers: { label: 'Clients', icon: '👤', path: '/customers' },
-      purchases: { label: 'Approvisionnements', icon: '📦', path: '/purchases' },
+      products: { label: 'Produits', icon: '📦', path: '/products' },
+      purchases: { label: 'Approvisionnements', icon: '📋', path: '/purchases' },
       sales: { label: 'Ventes', icon: '🛒', path: '/sales' },
-      transfers: { label: 'Transferts', icon: '📤', path: '/transfers' },
+      transfers: { label: 'Transferts', icon: '🔄', path: '/transfers' },
+      pos: { label: 'Point de Vente', icon: '🛍️', path: '/pos' },
       inventory: { label: 'Inventaires', icon: '📊', path: '/inventory' },
       accounting: { label: 'Comptabilité', icon: '💰', path: '/accounting' },
-      charges: { label: 'Charges', icon: '💸', path: '/charges' },
+      charges: { label: 'Charges', icon: '💸', path: '/expense-tracking' },
+      payment_config: { label: 'Paiements', icon: '💳', path: '/payment-configuration' },
+      reports: { label: 'Rapports', icon: '📄', path: '/reports' },
+      settings: { label: 'Paramètres', icon: '⚙️', path: '/settings' }
+    },
+
+    admin: {  // Alias for owner (same routes)
+      ...baseRoutes,
+      tenant_config: { label: 'Configuration Tenant', icon: '⚙️', path: '/tenant-configuration' },
+      collaborators: { label: 'Collaborateurs', icon: '👫', path: '/collaborators' },
+      users: { label: 'Utilisateurs', icon: '👥', path: '/users-management' },
+      suppliers: { label: 'Fournisseurs', icon: '🏭', path: '/suppliers' },
+      customers: { label: 'Clients', icon: '👤', path: '/customers' },
+      products: { label: 'Produits', icon: '📦', path: '/products' },
+      purchases: { label: 'Approvisionnements', icon: '📋', path: '/purchases' },
+      sales: { label: 'Ventes', icon: '🛒', path: '/sales' },
+      transfers: { label: 'Transferts', icon: '🔄', path: '/transfers' },
+      pos: { label: 'Point de Vente', icon: '🛍️', path: '/pos' },
+      inventory: { label: 'Inventaires', icon: '📊', path: '/inventory' },
+      accounting: { label: 'Comptabilité', icon: '💰', path: '/accounting' },
+      charges: { label: 'Charges', icon: '💸', path: '/expense-tracking' },
+      payment_config: { label: 'Paiements', icon: '💳', path: '/payment-configuration' },
       reports: { label: 'Rapports', icon: '📄', path: '/reports' },
       settings: { label: 'Paramètres', icon: '⚙️', path: '/settings' }
     },
@@ -162,7 +201,7 @@ export function getAccessibleRoutes(userRole) {
       sales: { label: 'Ventes', icon: '🛒', path: '/sales' },
       transfers: { label: 'Transferts', icon: '📤', path: '/transfers' },
       inventory: { label: 'Inventaires', icon: '📊', path: '/inventory' },
-      charges: { label: 'Charges', icon: '💸', path: '/charges' },
+      charges: { label: 'Charges', icon: '💸', path: '/expense-tracking' },
       reports: { label: 'Rapports', icon: '📄', path: '/reports' }
     },
 
@@ -170,7 +209,7 @@ export function getAccessibleRoutes(userRole) {
       ...baseRoutes,
       purchases: { label: 'Achats', icon: '📦', path: '/purchases' },
       sales: { label: 'Ventes', icon: '🛒', path: '/sales' },
-      charges: { label: 'Charges', icon: '💸', path: '/charges' },
+      charges: { label: 'Charges', icon: '💸', path: '/expense-tracking' },
       accounting: { label: 'Comptabilité', icon: '💰', path: '/accounting' },
       reports: { label: 'Rapports', icon: '📄', path: '/reports' }
     },
@@ -207,7 +246,19 @@ export function getAccessibleRoutes(userRole) {
     }
   };
 
-  return roleRoutes[userRole] || baseRoutes;
+  const routes = roleRoutes[userRole] || baseRoutes;
+  
+  // Debug logging
+  if (typeof window !== 'undefined') {
+    console.log(`🔍 getAccessibleRoutes('${userRole}'):`, {
+      userRole,
+      routesKeys: Object.keys(routes),
+      routesCount: Object.keys(routes).length,
+      routes: routes
+    });
+  }
+
+  return routes;
 }
 
 /**

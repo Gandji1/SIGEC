@@ -224,6 +224,7 @@ class TransferTest extends TestCase
             'reserved' => 0,
             'available' => 5,
             'cost_average' => 1000,
+            'unit_cost' => 1000,
         ]);
 
         // Déclencher auto-transfer

@@ -60,6 +60,7 @@ class TransferWorkflowTest extends TestCase
             'warehouse_id' => $this->warehouse_gros->id,
             'quantity' => 1000,
             'cost_average' => 10.00,
+            'unit_cost' => 10.00,
             'reserved' => 0,
             'available' => 1000,
         ]);

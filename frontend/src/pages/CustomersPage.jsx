@@ -21,6 +21,8 @@ export default function CustomersPage() {
     city: '',
     country: '',
     tax_id: '',
+    category: 'individual',
+    credit_limit: '',
   });
 
   useEffect(() => {
@@ -63,6 +65,8 @@ export default function CustomersPage() {
         city: '',
         country: '',
         tax_id: '',
+        category: 'individual',
+        credit_limit: '',
       });
       setEditingId(null);
       setShowForm(false);
@@ -120,9 +124,11 @@ export default function CustomersPage() {
                 city: '',
                 country: '',
                 tax_id: '',
+                category: 'individual',
+                credit_limit: '',
               });
               setEditingId(null);
-              setShowForm(!showForm);
+              setShowForm(true);
             }}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
           >
@@ -195,6 +201,26 @@ export default function CustomersPage() {
               value={formData.tax_id}
               onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
               className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <select
+              value={formData.category || 'individual'}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="individual">Particulier</option>
+              <option value="business">Entreprise</option>
+              <option value="vip">VIP</option>
+              <option value="prospect">Prospect</option>
+            </select>
+            <input
+              type="number"
+              placeholder="Limite de crédit"
+              value={formData.credit_limit}
+              onChange={(e) => setFormData({ ...formData, credit_limit: e.target.value })}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min="0"
+              step="0.01"
             />
             <div className="md:col-span-2 flex gap-2">
               <button

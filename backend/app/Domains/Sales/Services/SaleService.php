@@ -81,22 +81,35 @@ class SaleService
             }
         }
 
-        // Déduire le stock
+        // Déduire le stock et récupérer les coûts (CMP)
+        $costOfGoodsSold = 0;
         foreach ($sale->items as $item) {
+            // Récupérer le stock actuel avec CMP
+            $stock = Stock::where('product_id', $item->product_id)
+                ->where('tenant_id', $sale->tenant_id)
+                ->first();
+
+            if ($stock) {
+                // Accumulerovide le coût d'achat total (CMP × quantity)
+                $costOfGoodsSold += ($stock->cost_average ?? $item->product->purchase_price) * $item->quantity;
+            }
+
+            // Déduire le stock
             $this->stockService->removeStock($item->product_id, $item->quantity);
         }
 
         $sale->amount_paid = $amount_paid;
         $sale->payment_method = $payment_method;
+        $sale->cost_of_goods_sold = $costOfGoodsSold;
         $sale->complete();
 
-        // Auto-post to GL
+        // Auto-post to GL avec COGS
         $autoPostingService = new AutoPostingService($sale->tenant_id);
         $autoPostingService->postSaleCompleted($sale);
 
         AuditLog::log('update', 'sale', $sale->id, 
-            ['status' => 'completed', 'amount_paid' => $amount_paid],
-            "Sale completed with $payment_method payment"
+            ['status' => 'completed', 'amount_paid' => $amount_paid, 'cogs' => $costOfGoodsSold],
+            "Sale completed with $payment_method payment (COGS: {$costOfGoodsSold})"
         );
 
         return $sale;

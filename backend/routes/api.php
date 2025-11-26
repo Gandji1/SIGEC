@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TenantController;
+use App\Http\Controllers\Api\TenantConfigurationController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\CollaboratorController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\PurchaseController;
@@ -19,6 +21,10 @@ use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\LowStockAlertController;
+use App\Http\Controllers\Api\TransferBondController;
+use App\Http\Controllers\Api\DeliveryNoteController;
+use App\Http\Controllers\Api\ProcurementDocumentController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -38,6 +44,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
 
+    // Tenant Configuration routes (Owner/Manager)
+    Route::middleware('role:owner,manager')->prefix('tenant-config')->group(function () {
+        Route::get('/', [TenantConfigurationController::class, 'show']);
+        Route::put('/', [TenantConfigurationController::class, 'update']);
+        Route::get('/payment-methods', [TenantConfigurationController::class, 'paymentMethods']);
+        Route::post('/payment-methods', [TenantConfigurationController::class, 'configurePaymentMethod']);
+        Route::get('/pos', [TenantConfigurationController::class, 'posList']);
+        Route::post('/pos', [TenantConfigurationController::class, 'createPos']);
+    });
+
     // Tenant Management routes (Super Admin only)
     Route::middleware('role:super_admin')->prefix('tenants')->group(function () {
         Route::get('/', [TenantController::class, 'index']);
@@ -47,6 +63,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{tenant}', [TenantController::class, 'destroy']);
         Route::post('/{tenant}/suspend', [TenantController::class, 'suspend']);
         Route::post('/{tenant}/activate', [TenantController::class, 'activate']);
+        Route::post('/{tenant}/upload-logo', [TenantController::class, 'uploadLogo']);
+        Route::delete('/{tenant}/delete-logo', [TenantController::class, 'deleteLogo']);
     });
 
     // User Management routes (Owner/Manager)
@@ -59,6 +77,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{user}/assign-role', [UserController::class, 'assignRole']);
     });
 
+    // Collaborators Management routes (Owner/Manager)
+    Route::middleware('role:owner,manager')->prefix('collaborators')->group(function () {
+        Route::get('/', [CollaboratorController::class, 'index']);
+        Route::post('/', [CollaboratorController::class, 'store']);
+        Route::put('/{user}', [CollaboratorController::class, 'update']);
+        Route::delete('/{user}', [CollaboratorController::class, 'destroy']);
+        Route::post('/{user}/reset-password', [CollaboratorController::class, 'resetPassword']);
+        Route::get('/roles', [CollaboratorController::class, 'roles']);
+    });
+
     // Dashboard routes (NEW)
     Route::prefix('dashboard')->group(function () {
         Route::get('/stats', [DashboardController::class, 'stats']);
@@ -67,8 +95,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Expenses routes (NEW)
     Route::prefix('expenses')->group(function () {
-        Route::post('/', [ExpenseController::class, 'store']);
         Route::get('/', [ExpenseController::class, 'index']);
+        Route::post('/', [ExpenseController::class, 'store']);
+        Route::get('/statistics', [ExpenseController::class, 'statistics']);
+        Route::get('/{expense}', [ExpenseController::class, 'show']);
+        Route::put('/{expense}', [ExpenseController::class, 'update']);
+        Route::delete('/{expense}', [ExpenseController::class, 'destroy']);
     });
 
     // Reports routes (NEW - enriched)
@@ -121,6 +153,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('products', ProductController::class);
     Route::get('/products/low-stock', [ProductController::class, 'lowStock']);
     Route::get('/products/barcode/{barcode}', [ProductController::class, 'byBarcode']);
+    Route::post('/products/{product}/upload-image', [ProductController::class, 'uploadImage']);
+    Route::delete('/products/{product}/delete-image', [ProductController::class, 'deleteImage']);
 
     // Sale routes
     Route::apiResource('sales', SaleController::class);
@@ -157,6 +191,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/stocks/transfer', [StockController::class, 'transfer']);
     Route::get('/stocks/low-stock', [StockController::class, 'lowStock']);
     Route::get('/stocks/summary', [StockController::class, 'summary']);
+
+    // Low Stock Alerts routes (NEW)
+    Route::prefix('low-stock-alerts')->group(function () {
+        Route::post('/check', [LowStockAlertController::class, 'checkAlerts']);
+        Route::get('/summary', [LowStockAlertController::class, 'summary']);
+        Route::get('/', [LowStockAlertController::class, 'index']);
+        Route::post('/', [LowStockAlertController::class, 'store']);
+        Route::get('/{lowStockAlert}', [LowStockAlertController::class, 'show']);
+        Route::put('/{lowStockAlert}', [LowStockAlertController::class, 'update']);
+        Route::delete('/{lowStockAlert}', [LowStockAlertController::class, 'destroy']);
+        Route::post('/{lowStockAlert}/resolve', [LowStockAlertController::class, 'resolve']);
+        Route::post('/{lowStockAlert}/ignore', [LowStockAlertController::class, 'ignore']);
+    });
 
     // Customer routes
     Route::apiResource('customers', CustomerController::class);
@@ -211,6 +258,35 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/initialize', [PaymentController::class, 'initialize']);
         Route::post('/verify', [PaymentController::class, 'verify']);
         Route::get('/{reference}/status', [PaymentController::class, 'status']);
+    });
+
+    // Internal Documents routes (NEW)
+    Route::prefix('transfer-bonds')->group(function () {
+        Route::get('/', [TransferBondController::class, 'index']);
+        Route::post('/', [TransferBondController::class, 'store']);
+        Route::get('/{transferBond}', [TransferBondController::class, 'show']);
+        Route::put('/{transferBond}', [TransferBondController::class, 'update']);
+        Route::delete('/{transferBond}', [TransferBondController::class, 'destroy']);
+        Route::post('/{transferBond}/execute', [TransferBondController::class, 'execute']);
+    });
+
+    Route::prefix('delivery-notes')->group(function () {
+        Route::get('/', [DeliveryNoteController::class, 'index']);
+        Route::post('/', [DeliveryNoteController::class, 'store']);
+        Route::get('/{deliveryNote}', [DeliveryNoteController::class, 'show']);
+        Route::put('/{deliveryNote}', [DeliveryNoteController::class, 'update']);
+        Route::delete('/{deliveryNote}', [DeliveryNoteController::class, 'destroy']);
+        Route::post('/{deliveryNote}/deliver', [DeliveryNoteController::class, 'deliver']);
+    });
+
+    Route::prefix('procurement-documents')->group(function () {
+        Route::get('/', [ProcurementDocumentController::class, 'index']);
+        Route::post('/', [ProcurementDocumentController::class, 'store']);
+        Route::get('/{procurementDocument}', [ProcurementDocumentController::class, 'show']);
+        Route::put('/{procurementDocument}', [ProcurementDocumentController::class, 'update']);
+        Route::delete('/{procurementDocument}', [ProcurementDocumentController::class, 'destroy']);
+        Route::post('/{procurementDocument}/approve', [ProcurementDocumentController::class, 'approve']);
+        Route::post('/{procurementDocument}/receive', [ProcurementDocumentController::class, 'receive']);
     });
 });
 

@@ -15,7 +15,11 @@ import InventoryPage from './pages/InventoryPage';
 import ReportsPage from './pages/ReportsPage';
 import ChartOfAccountsPage from './pages/ChartOfAccountsPage';
 import TenantManagementPage from './pages/TenantManagementPage';
+import TenantConfigurationPage from './pages/TenantConfigurationPage';
+import PaymentConfigurationPage from './pages/PaymentConfigurationPage';
+import ExpenseTrackingPage from './pages/ExpenseTrackingPage';
 import UsersManagementPage from './pages/UsersManagementPage';
+import CollaboratorsPage from './pages/CollaboratorsPage';
 import SettingsPage from './pages/SettingsPage';
 import SuppliersPage from './pages/SuppliersPage';
 import CustomersPage from './pages/CustomersPage';
@@ -23,6 +27,7 @@ import ExpensesPage from './pages/ExpensesPage';
 import AccountingPage from './pages/AccountingPage';
 import ManagerDashboard from './pages/ManagerDashboard';
 import AccountantDashboard from './pages/AccountantDashboard';
+import DebugPage from './pages/DebugPage';
 import Layout from './components/Layout';
 
 function PrivateRoute({ children }) {
@@ -42,6 +47,7 @@ export default function App() {
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/debug" element={<DebugPage />} />
 
         {/* Private Routes */}
         <Route
@@ -125,10 +131,50 @@ export default function App() {
           }
         />
         <Route
+          path="/tenant-configuration"
+          element={
+            <PrivateRoute>
+              <TenantConfigurationPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/payment-configuration"
+          element={
+            <PrivateRoute>
+              <PaymentConfigurationPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/expense-tracking"
+          element={
+            <PrivateRoute>
+              <ExpenseTrackingPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/users-management"
+          element={
+            <PrivateRoute>
+              <UsersManagementPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/users"
           element={
             <PrivateRoute>
               <UsersManagementPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/collaborators"
+          element={
+            <PrivateRoute>
+              <CollaboratorsPage />
             </PrivateRoute>
           }
         />

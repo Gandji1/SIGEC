@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Plus, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import apiClient from '../services/apiClient';
 
 export default function PurchasesPage() {
   const [purchases, setPurchases] = useState([]);
@@ -15,27 +16,23 @@ export default function PurchasesPage() {
     items: [{ product_id: null, quantity: 0, unit_price: 0 }]
   });
 
-  const token = localStorage.getItem('token');
-
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      const headers = { 'Authorization': `Bearer ${token}` };
-
+      setLoading(true);
       // Fetch products
-      const prodRes = await fetch('http://localhost:8000/api/products', { headers });
-      const prodData = await prodRes.json();
-      setProducts(prodData.data || []);
+      const prodRes = await apiClient.get('/products');
+      setProducts(prodRes.data.data || []);
 
       // Fetch purchases
-      const purRes = await fetch('http://localhost:8000/api/purchases', { headers });
-      const purData = await purRes.json();
-      setPurchases(purData.data || []);
+      const purRes = await apiClient.get('/purchases');
+      setPurchases(purRes.data.data || []);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching data:', err);
+      setError(err.message || 'Erreur lors du chargement');
     } finally {
       setLoading(false);
     }

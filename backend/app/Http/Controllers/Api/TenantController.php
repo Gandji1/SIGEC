@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Tenant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class TenantController extends Controller
 {
@@ -36,6 +37,13 @@ class TenantController extends Controller
         $validated = $request->validate([
             'name' => 'string',
             'business_type' => 'string',
+            'phone' => 'nullable|string',
+            'email' => 'nullable|email',
+            'address' => 'nullable|string',
+            'currency' => 'nullable|string',
+            'tva_rate' => 'nullable|numeric|min:0',
+            'default_markup' => 'nullable|numeric|min:0',
+            'stock_policy' => 'nullable|in:fifo,lifo,cmp',
         ]);
 
         $tenant->update($validated);
@@ -58,5 +66,47 @@ class TenantController extends Controller
     {
         $tenant->update(['status' => 'active']);
         return response()->json(['success' => true, 'data' => $tenant]);
+    }
+
+    /**
+     * Upload tenant logo
+     */
+    public function uploadLogo(Request $request, Tenant $tenant)
+    {
+        $validated = $request->validate([
+            'logo' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ]);
+
+        // Supprimer ancien logo
+        if ($tenant->logo && Storage::exists($tenant->logo)) {
+            Storage::delete($tenant->logo);
+        }
+
+        // Sauvegarder nouveau logo
+        $path = $request->file('logo')->store('tenants', 'public');
+        $tenant->update(['logo' => $path]);
+
+        return response()->json([
+            'success' => true,
+            'logo_url' => Storage::url($path),
+            'tenant' => $tenant,
+        ]);
+    }
+
+    /**
+     * Delete tenant logo
+     */
+    public function deleteLogo(Tenant $tenant)
+    {
+        if ($tenant->logo && Storage::exists($tenant->logo)) {
+            Storage::delete($tenant->logo);
+        }
+
+        $tenant->update(['logo' => null]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logo deleted',
+        ]);
     }
 }

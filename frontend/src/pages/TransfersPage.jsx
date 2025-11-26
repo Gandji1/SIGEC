@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Send, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import apiClient from '../services/apiClient';
 
 export default function TransfersPage() {
   const [transfers, setTransfers] = useState([]);
@@ -17,32 +18,28 @@ export default function TransfersPage() {
     notes: ''
   });
 
-  const token = localStorage.getItem('token');
-
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      const headers = { 'Authorization': `Bearer ${token}` };
-
+      setLoading(true);
+      
       // Fetch warehouses
-      const whRes = await fetch('http://localhost:8000/api/warehouses', { headers });
-      const whData = await whRes.json();
-      setWarehouses(whData.data || []);
+      const whRes = await apiClient.get('/warehouses');
+      setWarehouses(whRes.data.data || []);
 
       // Fetch stocks for products
-      const stockRes = await fetch('http://localhost:8000/api/stocks', { headers });
-      const stockData = await stockRes.json();
-      setProducts(stockData.data || []);
+      const stockRes = await apiClient.get('/stocks');
+      setProducts(stockRes.data.data || []);
 
       // Fetch transfers
-      const tfRes = await fetch('http://localhost:8000/api/transfers', { headers });
-      const tfData = await tfRes.json();
-      setTransfers(tfData.data || []);
+      const tfRes = await apiClient.get('/transfers');
+      setTransfers(tfRes.data.data || []);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching data:', err);
+      setError(err.message || 'Erreur lors du chargement des données');
     } finally {
       setLoading(false);
     }
@@ -70,40 +67,27 @@ export default function TransfersPage() {
 
   const createTransfer = async () => {
     if (!formData.from_warehouse_id || !formData.to_warehouse_id) {
-      setError('Select both warehouses');
+      setError('Sélectionner les deux entrepôts');
       return;
     }
 
     try {
       setLoading(true);
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
+      const res = await apiClient.post('/transfers', formData);
 
-      const res = await fetch('http://localhost:8000/api/transfers', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(formData)
+      setSuccess('Transfert créé avec succès!');
+      setShowForm(false);
+      setFormData({
+        from_warehouse_id: null,
+        to_warehouse_id: null,
+        items: [{ product_id: null, quantity: 0 }],
+        notes: ''
       });
-
-      if (res.ok) {
-        setSuccess('Transfer request created!');
-        setShowForm(false);
-        setFormData({
-          from_warehouse_id: null,
-          to_warehouse_id: null,
-          items: [{ product_id: null, quantity: 0 }],
-          notes: ''
-        });
-        fetchData();
-        setTimeout(() => setSuccess(null), 3000);
-      } else {
-        const data = await res.json();
-        setError(data.error || 'Failed to create transfer');
-      }
+      fetchData();
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err.message);
+      console.error('Error creating transfer:', err);
+      setError(err.response?.data?.message || err.message || 'Erreur lors de la création du transfert');
     } finally {
       setLoading(false);
     }
@@ -111,37 +95,25 @@ export default function TransfersPage() {
 
   const approveTransfer = async (id) => {
     try {
-      const headers = { 'Authorization': `Bearer ${token}` };
-      const res = await fetch(`http://localhost:8000/api/transfers/${id}/approve`, {
-        method: 'POST',
-        headers
-      });
-
-      if (res.ok) {
-        setSuccess('Transfer approved!');
-        fetchData();
-        setTimeout(() => setSuccess(null), 3000);
-      }
+      await apiClient.post(`/transfers/${id}/approve`);
+      setSuccess('Transfert approuvé!');
+      fetchData();
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err.message);
+      console.error('Error approving transfer:', err);
+      setError(err.response?.data?.message || err.message || 'Erreur lors de l\'approbation');
     }
   };
 
   const cancelTransfer = async (id) => {
     try {
-      const headers = { 'Authorization': `Bearer ${token}` };
-      const res = await fetch(`http://localhost:8000/api/transfers/${id}/cancel`, {
-        method: 'POST',
-        headers
-      });
-
-      if (res.ok) {
-        setSuccess('Transfer cancelled!');
-        fetchData();
-        setTimeout(() => setSuccess(null), 3000);
-      }
+      await apiClient.post(`/transfers/${id}/cancel`);
+      setSuccess('Transfert annulé!');
+      fetchData();
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err.message);
+      console.error('Error canceling transfer:', err);
+      setError(err.response?.data?.message || err.message || 'Erreur lors de l\'annulation');
     }
   };
 

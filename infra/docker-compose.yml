@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # Backend API
+  # Backend API (Laravel 11 + SQLite)
   app:
     build:
       context: ../backend
@@ -12,29 +12,17 @@ services:
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
-      - APP_KEY=
-      - DB_CONNECTION=pgsql
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_DATABASE=sigec_db
-      - DB_USERNAME=sigec_user
-      - DB_PASSWORD=sigec_password
-      - REDIS_HOST=redis
-      - REDIS_PASSWORD=null
-      - REDIS_PORT=6379
+      - DB_CONNECTION=sqlite
     volumes:
       - ../backend:/app
       - ../backend/storage:/app/storage
     ports:
       - "8000:8000"
-    depends_on:
-      - postgres
-      - redis
     networks:
       - sigec-network
     command: sh -c "php artisan migrate --seed && php artisan serve --host=0.0.0.0"
 
-  # Frontend
+  # Frontend (React + Vite)
   frontend:
     build:
       context: ../frontend
@@ -50,65 +38,6 @@ services:
       - sigec-network
     command: npm run dev
 
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: sigec-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: sigec_db
-      POSTGRES_USER: sigec_user
-      POSTGRES_PASSWORD: sigec_password
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
-    volumes:
-      - ./storage/postgres:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    networks:
-      - sigec-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sigec_user -d sigec_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Redis Cache & Queue
-  redis:
-    image: redis:7-alpine
-    container_name: sigec-redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass ""
-    volumes:
-      - ./storage/redis:/data
-    ports:
-      - "6379:6379"
-    networks:
-      - sigec-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # pgAdmin for Database Management
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: sigec-pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@sigec.local
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "5050:80"
-    networks:
-      - sigec-network
-    depends_on:
-      - postgres
-
 networks:
   sigec-network:
     driver: bridge
-
-volumes:
-  postgres_data:
-  redis_data:

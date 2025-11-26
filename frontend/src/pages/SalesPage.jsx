@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Trash2, Plus, Save, AlertCircle } from 'lucide-react';
+import apiClient from '../services/apiClient';
 
 export default function SalesPage() {
   const [cart, setCart] = useState([]);
@@ -12,28 +13,24 @@ export default function SalesPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  const token = localStorage.getItem('token');
-
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      const headers = { 'Authorization': `Bearer ${token}` };
-
+      setLoading(true);
       // Fetch warehouses
-      const whRes = await fetch('http://localhost:8000/api/warehouses', { headers });
-      const whData = await whRes.json();
-      setWarehouses(whData.data || []);
-      if (whData.data?.length) setSelectedWarehouse(whData.data[0].id);
+      const whRes = await apiClient.get('/warehouses');
+      setWarehouses(whRes.data.data || []);
+      if (whRes.data.data?.length) setSelectedWarehouse(whRes.data.data[0].id);
 
       // Fetch stocks
-      const stockRes = await fetch('http://localhost:8000/api/stocks', { headers });
-      const stockData = await stockRes.json();
-      setProducts(stockData.data || []);
+      const stockRes = await apiClient.get('/stocks');
+      setProducts(stockRes.data.data || []);
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching data:', err);
+      setError(err.message || 'Erreur lors du chargement');
     } finally {
       setLoading(false);
     }

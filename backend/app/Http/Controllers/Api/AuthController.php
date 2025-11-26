@@ -40,23 +40,23 @@ class AuthController extends Controller
 
         // Créer les warehouses par défaut selon le mode
         if ($validated['mode_pos'] === 'A') {
-            // Mode A: gros et détail
-            Warehouse::create(['tenant_id' => $tenant->id, 'code' => 'WH-GROS', 'name' => 'Gros', 'type' => 'gros']);
+            // Mode A: détail + POS (pas gros)
             Warehouse::create(['tenant_id' => $tenant->id, 'code' => 'WH-DETAIL', 'name' => 'Détail', 'type' => 'detail']);
+            Warehouse::create(['tenant_id' => $tenant->id, 'code' => 'WH-POS', 'name' => 'POS', 'type' => 'pos']);
         } else {
-            // Mode B: gros, détail et POS
+            // Mode B: gros + détail + POS
             Warehouse::create(['tenant_id' => $tenant->id, 'code' => 'WH-GROS', 'name' => 'Gros', 'type' => 'gros']);
             Warehouse::create(['tenant_id' => $tenant->id, 'code' => 'WH-DETAIL', 'name' => 'Détail', 'type' => 'detail']);
             Warehouse::create(['tenant_id' => $tenant->id, 'code' => 'WH-POS', 'name' => 'POS', 'type' => 'pos']);
         }
 
-        // Créer l'utilisateur admin
+        // Créer l'utilisateur owner
         $user = User::create([
             'tenant_id' => $tenant->id,
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => 'admin',
+            'role' => 'owner',
             'status' => 'active',
         ]);
 

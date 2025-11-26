@@ -155,4 +155,50 @@ class ProductController extends Controller
 
         return response()->json($product->load('stocks'));
     }
+
+    public function uploadImage(Request $request, Product $product): JsonResponse
+    {
+        if ($product->tenant_id !== auth()->guard('sanctum')->user()->tenant_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        ]);
+
+        // Supprimer l'ancienne image si elle existe
+        if ($product->image && \Storage::exists($product->image)) {
+            \Storage::delete($product->image);
+        }
+
+        // Sauvegarder la nouvelle image
+        $path = $request->file('image')->store('products', 'public');
+
+        $product->update(['image' => $path]);
+
+        AuditLog::log('update', 'product', $product->id, ['image' => $path], 'Product image uploaded');
+
+        return response()->json([
+            'success' => true,
+            'image_url' => \Storage::url($path),
+            'product' => $product,
+        ]);
+    }
+
+    public function deleteImage(Product $product): JsonResponse
+    {
+        if ($product->tenant_id !== auth()->guard('sanctum')->user()->tenant_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($product->image && \Storage::exists($product->image)) {
+            \Storage::delete($product->image);
+        }
+
+        $product->update(['image' => null]);
+
+        AuditLog::log('update', 'product', $product->id, ['image' => null], 'Product image deleted');
+
+        return response()->json(['success' => true, 'message' => 'Image deleted']);
+    }
 }

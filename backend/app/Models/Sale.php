@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,11 +10,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Sale extends Model
 {
+    use HasFactory, SoftDeletes;
     use SoftDeletes;
 
     protected $fillable = [
         'tenant_id',
         'user_id',
+        'warehouse_id',
         'reference',
         'mode',
         'customer_name',
@@ -25,6 +28,7 @@ class Sale extends Model
         'amount_paid',
         'change',
         'payment_method',
+        'cost_of_goods_sold',
         'status',
         'notes',
         'completed_at',
@@ -37,6 +41,7 @@ class Sale extends Model
         'total' => 'decimal:2',
         'amount_paid' => 'decimal:2',
         'change' => 'decimal:2',
+        'cost_of_goods_sold' => 'decimal:2',
         'completed_at' => 'datetime',
         'metadata' => 'array',
     ];
@@ -49,6 +54,11 @@ class Sale extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class)->nullable();
     }
 
     public function items(): HasMany

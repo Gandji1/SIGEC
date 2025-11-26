@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tenant extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -29,6 +30,11 @@ class Tenant extends Model
         'subscription_expires_at',
         'mode_pos',
         'accounting_enabled',
+        'tva_rate',
+        'default_markup',
+        'stock_policy',
+        'payment_methods',
+        'pos_configuration',
     ];
 
     protected $casts = [
@@ -74,6 +80,21 @@ class Tenant extends Model
     public function chartOfAccounts(): HasMany
     {
         return $this->hasMany(ChartOfAccount::class);
+    }
+
+    public function pos(): HasMany
+    {
+        return $this->hasMany(Pos::class);
+    }
+
+    public function paymentMethods(): HasMany
+    {
+        return $this->hasMany(PaymentMethod::class);
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
     }
 
     public function isActive(): bool

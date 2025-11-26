@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Stock extends Model
 {
+    use HasFactory, SoftDeletes;
     protected $fillable = [
         'tenant_id',
         'product_id',
@@ -42,7 +45,7 @@ class Stock extends Model
 
     public function warehouse(): BelongsTo
     {
-        return $this->belongsTo(Warehouse::class)->nullable();
+        return $this->belongsTo(Warehouse::class);
     }
 
     public function movements(): HasMany

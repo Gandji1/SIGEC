@@ -16,6 +16,9 @@ export default function LoginPage() {
     password_confirmation: '',
     tenant_name: '',
     name: '',
+    mode_pos: 'A',
+    currency: 'XOF',
+    country: 'BJ',
   });
 
   const handleChange = (e) => {
@@ -67,6 +70,9 @@ export default function LoginPage() {
         email: formData.email,
         password: formData.password,
         password_confirmation: formData.password_confirmation,
+        mode_pos: formData.mode_pos || 'A',
+        currency: formData.currency || 'XOF',
+        country: formData.country || 'BJ',
       });
 
       setToken(response.data.token);
@@ -96,25 +102,31 @@ export default function LoginPage() {
         {mode === 'login' ? (
           <form onSubmit={handleLogin}>
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">Email</label>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Email <span className="text-red-500 font-bold">*</span>
+              </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                placeholder="email@example.com"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
 
             <div className="mb-6">
-              <label className="block text-gray-700 font-medium mb-2">Password</label>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Password <span className="text-red-500 font-bold">*</span>
+              </label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                placeholder="Your password"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
@@ -127,7 +139,7 @@ export default function LoginPage() {
               {loading ? 'Logging in...' : 'Login'}
             </button>
 
-            <p className="text-center text-gray-600 mt-4">
+            <p className="text-center text-gray-600 mt-4 text-sm">
               Don't have an account?{' '}
               <button
                 type="button"
@@ -141,61 +153,94 @@ export default function LoginPage() {
         ) : (
           <form onSubmit={handleRegister}>
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">Business Name</label>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Business Name <span className="text-red-500 font-bold">*</span>
+              </label>
               <input
                 type="text"
                 name="tenant_name"
                 value={formData.tenant_name}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                placeholder="e.g. My Business"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">Your Name</label>
+              <label className="block text-gray-700 font-semibold mb-2">
+                POS Mode <span className="text-red-500 font-bold">*</span>
+              </label>
+              <select
+                name="mode_pos"
+                value={formData.mode_pos || 'A'}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                required
+              >
+                <option value="">-- Select POS Mode --</option>
+                <option value="A">Mode A: Wholesale & Retail</option>
+                <option value="B">Mode B: Wholesale, Retail & POS</option>
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 font-semibold mb-2">
+                Your Name <span className="text-red-500 font-bold">*</span>
+              </label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                placeholder="Full name"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">Email</label>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Email <span className="text-red-500 font-bold">*</span>
+              </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                placeholder="email@example.com"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
 
             <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2">Password</label>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Password <span className="text-red-500 font-bold">*</span>
+              </label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                placeholder="Min. 8 characters"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
+                minLength="8"
               />
             </div>
 
             <div className="mb-6">
-              <label className="block text-gray-700 font-medium mb-2">Confirm Password</label>
+              <label className="block text-gray-700 font-semibold mb-2">
+                Confirm Password <span className="text-red-500 font-bold">*</span>
+              </label>
               <input
                 type="password"
                 name="password_confirmation"
                 value={formData.password_confirmation}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                placeholder="Re-enter password"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
@@ -208,7 +253,7 @@ export default function LoginPage() {
               {loading ? 'Creating account...' : 'Register'}
             </button>
 
-            <p className="text-center text-gray-600 mt-4">
+            <p className="text-center text-gray-600 mt-4 text-sm">
               Already have an account?{' '}
               <button
                 type="button"

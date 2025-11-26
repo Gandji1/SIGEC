@@ -14,8 +14,34 @@ export default function Layout({ children }) {
     navigate('/login');
   };
 
+  // Déterminer le rôle de l'utilisateur
+  const userRole = user?.role || 'auditor';
+  
   // Obtenir les routes dynamiquement selon le rôle
-  const menuItems = Object.values(getAccessibleRoutes(user?.role || 'auditor'));
+  const accessibleRoutesObj = getAccessibleRoutes(userRole);
+  const menuItems = Object.values(accessibleRoutesObj);
+  
+  // Debug logging - only when role changes
+  React.useEffect(() => {
+    console.log('🔍 DEBUG Layout.jsx:');
+    console.log('  user?.role:', user?.role);
+    console.log('  userRole:', userRole);
+    console.log('  accessibleRoutesObj keys:', Object.keys(accessibleRoutesObj));
+    console.log('  menuItems length:', menuItems.length);
+    console.log('  menuItems:', menuItems);
+  }, [userRole]);
+
+  // Early return if user is not loaded yet
+  if (!user) {
+    return (
+      <div className="flex h-screen bg-gray-100 items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">

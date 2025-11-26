@@ -13,27 +13,44 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create test tenant
+        // Create test tenant with Mode B (complet)
         $tenant = Tenant::create([
             'name' => 'Demo Business',
             'slug' => 'demo-business',
             'domain' => 'demo.localhost',
+            'mode_pos' => 'B',
             'currency' => 'XOF',
             'country' => 'Senegal',
             'phone' => '+221 77 123 45 67',
             'email' => 'admin@demo.local',
             'address' => '123 Main Street, Dakar',
             'status' => 'active',
+            'tva_rate' => 18.00,
+            'default_markup' => 30.00,
+            'stock_policy' => 'cmp',
+            'allow_credit' => false,
+            'accounting_enabled' => true,
         ]);
 
-        // Create admin user
+        // Create owner user (for tenant configuration)
+        User::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Owner User',
+            'email' => 'owner@demo.local',
+            'password' => Hash::make('password'),
+            'phone' => '+221 77 111 11 11',
+            'role' => 'owner',
+            'status' => 'active',
+        ]);
+
+        // Create admin user (legacy, for compatibility)
         User::create([
             'tenant_id' => $tenant->id,
             'name' => 'Admin User',
             'email' => 'admin@demo.local',
             'password' => Hash::make('password'),
             'phone' => '+221 77 111 11 11',
-            'role' => 'admin',
+            'role' => 'owner',
             'status' => 'active',
         ]);
 
@@ -48,14 +65,25 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
         ]);
 
-        // Create staff user
+        // Create accountant user
         User::create([
             'tenant_id' => $tenant->id,
-            'name' => 'Staff User',
-            'email' => 'staff@demo.local',
+            'name' => 'Accountant User',
+            'email' => 'accountant@demo.local',
             'password' => Hash::make('password'),
-            'phone' => '+221 77 333 33 33',
-            'role' => 'staff',
+            'phone' => '+221 77 444 44 44',
+            'role' => 'accountant',
+            'status' => 'active',
+        ]);
+
+        // Create warehouse user
+        User::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Warehouse User',
+            'email' => 'warehouse@demo.local',
+            'password' => Hash::make('password'),
+            'phone' => '+221 77 555 55 55',
+            'role' => 'magasinier_gros',
             'status' => 'active',
         ]);
 
