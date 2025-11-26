@@ -11,7 +11,7 @@ export default function POSPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentMethod, setPaymentMethod] = useState('especes');
   const [amountPaid, setAmountPaid] = useState(0);
 
   useEffect(() => {
@@ -275,10 +275,12 @@ export default function POSPage() {
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none"
                   >
-                    <option value="cash">Cash</option>
-                    <option value="card">Card</option>
-                    <option value="transfer">Transfer</option>
-                    <option value="check">Check</option>
+                    <option value="especes">💵 Espèces</option>
+                    <option value="cheque">📋 Chèque</option>
+                    <option value="virement">🏦 Virement</option>
+                    <option value="credit_card">💳 Carte Crédit</option>
+                    <option value="kkiapay">📱 KkiaPay</option>
+                    <option value="fedapay">📱 FedaPay</option>
                   </select>
 
                   <input

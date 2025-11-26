@@ -139,11 +139,25 @@ class TenantConfigurationController extends Controller
             ]);
 
             // Si pas de warehouse, utiliser le POS warehouse du tenant
-            if (!$validated['warehouse_id']) {
+            if (empty($validated['warehouse_id'])) {
                 $warehouse = \App\Models\Warehouse::where('tenant_id', $tenantId)
                     ->where('type', 'pos')
                     ->first();
-                $validated['warehouse_id'] = $warehouse?->id;
+                
+                if (!$warehouse) {
+                    // Si pas de warehouse POS, utiliser la première warehouse du tenant
+                    $warehouse = \App\Models\Warehouse::where('tenant_id', $tenantId)
+                        ->first();
+                }
+                
+                if (!$warehouse) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Aucun entrepôt trouvé pour ce tenant',
+                    ], 400);
+                }
+                
+                $validated['warehouse_id'] = $warehouse->id;
             }
 
             $pos = Pos::create([

@@ -8,7 +8,7 @@ export default function SalesPage() {
   const [warehouses, setWarehouses] = useState([]);
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
   const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '' });
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentMethod, setPaymentMethod] = useState('especes');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -290,9 +290,12 @@ export default function SalesPage() {
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded text-sm focus:border-green-500 outline-none"
               >
-                <option value="cash">💵 Cash</option>
-                <option value="momo">📱 Mobile Money</option>
-                <option value="bank">🏦 Bank Transfer</option>
+                <option value="especes">💵 Espèces</option>
+                <option value="cheque">📋 Chèque</option>
+                <option value="virement">🏦 Virement</option>
+                <option value="credit_card">💳 Carte Crédit</option>
+                <option value="kkiapay">📱 KkiaPay</option>
+                <option value="fedapay">📱 FedaPay</option>
               </select>
             </div>
 

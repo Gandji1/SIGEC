@@ -31,8 +31,10 @@ class ExpenseController extends Controller
 
         $expense = Expense::create([
             'tenant_id' => $tenant_id,
+            'user_id' => auth()->id(),
             'recorded_by' => auth()->id(),
             'is_fixed' => $validated['is_fixed'] ?? false,
+            'date' => $validated['expense_date'],  // Set date field for the old column
             ...$validated,
         ]);
 

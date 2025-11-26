@@ -379,13 +379,19 @@ export default function ExpenseTrackingPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Moyen de Paiement
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={formData.payment_method}
                     onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-                    placeholder="Ex: Espèces, Chèque, Virement"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
+                  >
+                    <option value="">-- Sélectionner --</option>
+                    <option value="especes">Espèces</option>
+                    <option value="cheque">Chèque</option>
+                    <option value="virement">Virement</option>
+                    <option value="credit_card">Carte Crédit</option>
+                    <option value="kkiapay">KkiaPay</option>
+                    <option value="fedapay">FedaPay</option>
+                  </select>
                 </div>
 
                 <div className="border-t pt-4">
